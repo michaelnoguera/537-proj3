@@ -13,10 +13,6 @@
 // interpret
 // "537ps:  537ps.o readproc.o parseopts.o output.o"
 // into target name and dep names
-for ruleStr in makefile:
-    target = initTarget(headerString);
-    for dep in makeDeps(rule):
-        
 
 char* getline(); // follows the rules
 

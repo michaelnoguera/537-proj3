@@ -1,8 +1,9 @@
 /**
- * Implementation of AVL balanced binary tree with string keys and void* values.
+ * CS 537 Programming Assignment 3 (Fall 2020)
  * @author Michael Noguera
  * @date 11/4/2020
- * @file bintree.h
+ * @brief Implementation of AVL balanced binary tree with string keys and void* values.
+ * @file bintree.c
  */
 
 #include "bintree.h"

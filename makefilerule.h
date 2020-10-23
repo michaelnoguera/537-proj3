@@ -3,17 +3,20 @@
  * @author Michael Noguera (noguera) <mnoguera(at)wisc.edu>
  * @author Julien de Castelnau (de-castelnau) <decastelnau(at)wisc.edu>
  * @date 11/4/2020
+ * @brief Representation of a makefile rule stucture.
  * @file makefilerule.h
  */
 
 typedef struct makefile_rule_t {
     char* target;
     char** dependencies;
+    int numdeps;
     char** commands;
 } Rule;
 
-Rule* initializeMakefileRule()
+// Will want initializeMakefileRule but the others aren't used at the moment. Thoughts?
+/*Rule* initializeMakefileRule()
 
-char** getDependencies(rule);
+char** getDependencies(Rule* rule);
 
-char** getCommand(int index)
+char** getCommand(int index)*/

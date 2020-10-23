@@ -1,58 +1,124 @@
 
+/**
+ * CS 537 Programming Assignment 3 (Fall 2020)
+ * @author Julien de Castelnau and Michael Noguera 
+ * @date 11/4/2020
+ * @brief Implementation of a directed dependency graph of makefile rules using a linkedlist and a String-keyed BST (See bintree.h).
+ * @file graph.c
+ */
+
 #include "linkedlist.h"
+#include "graph.h"
 
-const enum Status {VISITED, VISITING, UNVISITED};
+#include <stdio.h>
+#include <assert.h>
+#include <stdlib.h>
 
-typedef struct g_Graph_t {
-    int size;
-    LinkedList* /*of g_Node_t*s */ nodes;
-} Graph;
 
-struct g_Node_t {
-    enum Status mark;
-    void* contents;
-    g_Node_t** successors;
-};
-
-g_Node_t* initializeGraphNode(Graph g, void* contents, int[] successors) {
-
-}
-
-g_Node_t* nextUnvisited(LinkedList /* of g_Node_ts*/ nodeList) {
-    assert(nodeList != NULL);
-
-    for (int i = 0; i < nodeList->size; i++) {
-        g_Node_t() 
-        ll_get(nodeList);
+// Graph constructor
+Graph* initGraph() {
+    Graph* g = (Graph*)malloc(sizeof(Graph));
+    if (g == NULL) {
+        perror("Error allocating memory for new graph.\n");
+        exit(EXIT_FAILURE);
     }
+    g->size = 0;
+
+    if ((g->nodes = ll_initialize()) == NULL) {
+        perror("Error initializing linked list for new graph.");
+        exit(EXIT_FAILURE);
+    }
+
+    if ((g->searchtree = bt_initializeTree()) == NULL) {
+        perror("Error initializing search tree for graph.");
+        exit(EXIT_FAILURE);
+    }
+
+    return g;
 }
 
-LinkedList /*of content type*/ topologicalSort(Graph graph);
-// helper func: ret first unvisited or null
+// Graph node initializer.
+Node* initializeGraphNode(Graph* g, Rule* contents) {
+    if (g == NULL) {
+        perror("Can't add a graph node to NULL.");
+        exit(EXIT_FAILURE);
+    }
 
-// main func: topo order
-// creates an empty list
-// while next = helper != null
-    // visit next
+    Node* new_node = (Node*)malloc(sizeof(Node));
+    if (new_node == NULL) {
+        perror("Failed to allocate memory for new graph node.");
+        exit(EXIT_FAILURE);
+    }
 
-// visit function
-// if has been visited -> return to recur upwards
-// if is being visited -> return with circular dep. error
-// mark as being visited currently
-// visit all nodes that are the successors of n
+    new_node->contents = contents;
+    new_node->mark = UNVISITED;
 
-function visit(node n)
-    if n has a permanent mark then
-        return // recur up
-    if n has a temporary mark then
-        stop   (not a DAG) // CIRCULAR DEPENDENCY ERROR OUT
+    assert(g->nodes != NULL);
+    assert(g->searchtree != NULL);
 
-    mark n with a temporary mark
+    bt_insert(g->searchtree, (new_node->contents)->target, new_node); // Add to BST
+    ll_push(g->nodes, new_node);
+    g->size++;
 
-    for each node m with an edge from n to m do
-        visit(m) // recur down
+    return new_node;
+}
 
-    remove temporary mark from n
-    mark n with a permanent mark // has been visited, ignore now
-    add n to head of L // add to front of topo list
+/**
+ * Helper method for topological sort, traverses through nodes and their dependencies.
+ * 
+ * @param searchTree BTree to search dep names against 
+ * @param l LinkedList to add results to
+ * @param n Currently visited node
+ * 
+ */
+void visit(BTree* searchTree, LinkedList* l, Node* n) {
+    assert(l != NULL);
+    assert(n != NULL);
 
+    if (n->mark == VISITED) return;
+    if (n->mark == VISITING) {
+        fprintf(stderr, "ERROR: Circular dependency detected\n");
+        exit(EXIT_FAILURE);
+    }
+
+    n->mark = VISITING;
+
+    char** successors = n->contents->dependencies;
+    for (int i = 0; i < n->contents->numdeps; i++) {
+
+        // Some elements of successors will map to NULL, this corresponds to
+        // spots where the dependencies are assumed to be file targets
+        // (i.e. not declared in the actual makefile.)
+
+        Node* search_result = bt_get(searchTree, successors[i]);
+        
+        if (search_result != NULL) {
+            visit(searchTree, l, search_result);
+        }
+    }
+
+    n->mark = VISITED;
+    ll_push(l, n->contents);
+}
+
+// Topological sort
+LinkedList* topologicalSort(Graph* g) {
+    assert(g != NULL);
+
+    LinkedList* sorted;
+
+    if ((sorted = ll_initialize()) == NULL) {
+        perror("Error initializing linked list for new graph.");
+        exit(EXIT_FAILURE);
+    }
+
+    struct ll_node_t* curr = g->nodes->head;
+    for (int i = 0; i < g->size; i++) {
+        if (((Node*)curr->value)->mark == UNVISITED) {
+            visit(g->searchtree, sorted, ((Node*)curr->value));
+        }
+        curr = curr->next;
+    }
+
+    return sorted;
+}
