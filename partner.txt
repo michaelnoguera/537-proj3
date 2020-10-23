@@ -1,2 +1,2 @@
-Michael Noguera, noguera, mnoguera
-Julien de Castelnau, de-castelnau, decastelnau
+Noguera, Michael, noguera, mnoguera
+de Castelnau, Julien, de-castelnau, decastelnau
