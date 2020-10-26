@@ -7,12 +7,22 @@
  * @file makefilerule.h
  */
 
+#include "linkedlist.h"
+#include "time.h"
+
 typedef struct makefile_rule_t {
     char* target;
     char** dependencies;
     int numdeps;
     char** commands;
 } Rule;
+
+typedef struct makefile_command_t {
+    char* root;
+    char** args;
+    char* input;
+    char* output;
+} Command;
 
 // Will want initializeMakefileRule but the others aren't used at the moment. Thoughts?
 /*Rule* initializeMakefileRule()
