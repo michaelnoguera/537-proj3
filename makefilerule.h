@@ -7,6 +7,8 @@
  * @file makefilerule.h
  */
 
+#pragma once
+
 #include "linkedlist.h"
 #include "time.h"
 
@@ -14,12 +16,11 @@ typedef struct makefile_rule_t {
     char* target;
     char** dependencies;
     int numdeps;
-    char** commands;
+    LinkedList* commands;
 } Rule;
 
 typedef struct makefile_command_t {
-    char* root;
-    char** args;
+    char** argv;
     char* input;
     char* output;
 } Command;

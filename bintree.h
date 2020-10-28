@@ -8,6 +8,8 @@
 
 #include <stdlib.h>
 
+#pragma once
+
 struct bt_node_t;
 
 typedef struct bt_node_t {

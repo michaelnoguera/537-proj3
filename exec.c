@@ -1,101 +1,59 @@
-#include "linkedlist.h"
-#include "bintree.h"
-#include "graph.h"
+#include "exec.h"
 
-// makeTODOLIST:
-    // iterates the topo order list: get next rule
-        // FOR THIS RULE:
-            // need to build = false
-            // for each dependency, if dep is newer than target
-                // need to build = true; break
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/wait.h>
+#include <fcntl.h>
+#include <unistd.h>
 
-            // 
+#include <stdbool.h>
+#include <stdio.h>
 
-
-// TODO take a string as input
-
-// TODO fork and run the string
-
-// STATIC FRIENDLY WRAPPER OVER EXECVP
-// - take arguments
-// - stdin
-// - stdio
-// 
-
-// execCommand(char* command) {
-    // for each command, fork
-
-        // if you're the fork
-        // CALL FRIENDLY EXECVP
-
-        // if you're not:
-            // use wait3 to wait on the fork to finish
-            // capture
-            // coalesce with forked proc
-        
-    // If it succeeded, set timestamp to now.
-    // (r->timestamp)
-// }
-
-///@return file modification time, or 0 if not found
-time_t getModDate(char* filename) {
-    // construct filepath from pid
-    char* filepath;
-    if (asprintf(&filepath, "/proc/%d/status", pid) == -1) {
-        printf("Error allocating memory to hold filepath for process number %d\n", pid);
+//TODO: properly implement return value
+int execCommand(Command* command) {
+    pid_t child_pid;
+    int status;
+    
+    child_pid = fork();
+    if(child_pid < 0) {
+        // there was an error calling fork
+        perror("Error calling fork()");
         exit(EXIT_FAILURE);
+    } else if(child_pid == 0) {
+        // CHILD PROCESS
+        // use execvp() to start new command
+        printf("command: %s\n", *command->argv);
+        if (execvp(*command->argv, command->argv) < 0) {     /* execute the command  */
+               perror("Error calling exec");
+               exit(1);
+        }
+    } else {
+        // PARENT PROCESS
+        // wait for child process to finish
+        while (wait(&status) != child_pid)       /* wait for completion  */
+            ;
     }
-
-    // create statusfile input stream
-    FILE* statusfile = fopen(filepath, "r");
-    if (statusfile == NULL) {
-        return 0;
-    }
-    free(filepath);  //upon success, filepath is no longer needed
-    return date;
+    return status;
 }
 
-// called for each entry in topoTodoList
-execRule (Rule* rule) {
-    // guaranteed dependencies are already complete
+time_t getModDate(char* filename) {
+    // create file descriptor for specified file
+    int fd = open(filename, O_RDONLY);
 
-    bool outOfDate = FALSE;
-
-    time_t targetTime = getModDate(rule->target);
-    if (targetTime == NULL) outOfDate = TRUE;
-
-    int i = 0;
-    while (!outOfDate) {
-        depname = ll_get(rule->dependencies, i);
-        // if file with depname doesn't exist:
-            // No? Search BST for dependency?
-            // Was something found? It's a target.
-            // Was nothing found? error, it was a file but not found.
-
-        time_T depTime = getModDate(depname);
-        if (deptime == NULL || deptime > targetTime) outOfDate = TRUE;
-        i++;
+    // TODO: add error handling?
+    // if the return value is -1 it could be because the file doesn't exist, or because some other
+    // error occurred. better error handling is probably in order
+    if (fd == -1) {
+        return 0;
     }
-    
-    if (outOfDate) {
-        for (command) {
-            execCommand(command);
-        }
+    struct stat filestats;
+     
+    if (fstat(fd, &filestats) != 0) {
+        return 0;
+    } else {
+        return filestats.st_mtime;
     }
-    
 
-    // WE DO NEED TO BUILD
-
-    // No? Search BST for dependency?
-        // Was something found? It's a target.
-        // Was nothing found? error, it was a file but not found.
-
-    //if (!timestamp || dep->timestamp > timestamp) 
-        // else return
-
-    //    build this thing:
-    //      for each command; execCommand(Rule);
-   
 }
 
 /**
@@ -105,22 +63,53 @@ execRule (Rule* rule) {
  * @param key string key to search for
  * @return pointer to Rule with the name `key`
  */ 
-static Rule* getRuleFromKey(BTree map, char* key) {
+static Rule* getRuleFromKey(BTree* map, char* key) {
     return (Rule*)bt_get(map, key);
 }
 
-static LinkedListNode* iterator = NULL;
-static Rule* nextRule(LinkedList order) {
-    // get next in list, based on iterator
-    // update iterator
+void execRule (BTree* map, Rule* rule) {
+    // guaranteed dependencies are already complete
+
+    bool outOfDate = false;
+
+    time_t targetTime = getModDate(rule->target);
+    if (targetTime == NULL) outOfDate = true;
+
+    int i = 0;
+    char* depname;
+    
+    while (i < rule->numdeps) {
+        depname = rule->dependencies[i];
+        time_t depTime = getModDate(depname);
+
+        // No file was found. Assume it's a Rule?
+        if (depTime == NULL) {
+            Rule* result = getRuleFromKey(map, depname);
+            // Not found? Then it cannot be satisfied
+            if (result == NULL) {
+                fprintf(stderr, "ERROR: No rule to make target '%s'\n", depname);
+                exit(EXIT_FAILURE);
+            }
+            // If it was found, its timestamp is represented by 0, which is already its value.
+        }
+        if (depTime == NULL || depTime > targetTime) outOfDate = true;
+        i++;
+    }
+    
+    if (outOfDate) {
+        LinkedListNode* curr_command = (rule->commands)->head;
+        for (int i = 0; i < rule->commands->size; i++) {
+            execCommand((Command*)curr_command->value);
+            curr_command = curr_command->next;
+        }
+    }
 }
 
-// MAIN FUNCTION IN THIS MODULE:
-int doStuff(LinkedList order, BTree map) {
-
-
-    //
-    return status;
+int execRules(LinkedList* order, BTree* map) {
+    LinkedListNode* curr_rule = order->head;
+    for (int i = 0; i < order->size; i++) {
+        execRule(map, (Rule*)curr_rule->value);
+        curr_rule = curr_rule->next;
+    }
+    return 0;
 }
-
-["ls -lah", "cd ..", "echo 'test'"]

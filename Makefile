@@ -8,10 +8,17 @@ SCAN_BUILD_DIR=scan-build-out
 all: 537make
 
 # build executable
-537make: main.o graph.o bintree.o linkedlist.o
-	gcc -o 537make main.o graph.o bintree.o linkedlist.o
+537make: main.o exec.o graph.o bintree.o linkedlist.o
+	gcc -o 537make main.o exec.o graph.o bintree.o linkedlist.o
 
-main.o: main.c graph.h makefilerule.h
+main.o: main.c graph.h exec.h makefilerule.h
+ifeq ($(DEBUG),true)
+	gcc -g -c -o $@ $< $(CFLAGS)
+else
+	gcc -c -o $@ $< $(CFLAGS)
+endif
+
+exec.o: exec.c exec.h linkedlist.h graph.h makefilerule.h
 ifeq ($(DEBUG),true)
 	gcc -g -c -o $@ $< $(CFLAGS)
 else
