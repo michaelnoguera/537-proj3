@@ -6,9 +6,10 @@
  * @file bintree.h
  */
 
-#include <stdlib.h>
+#ifndef _BINTREE_
+#define _BINTREE_
 
-#pragma once
+#include <stdlib.h>
 
 struct bt_node_t;
 
@@ -54,3 +55,4 @@ int bt_insert(BTree* tree, const char* key, const void* value);
  * as well.
  */
 const void* bt_get(const BTree* tree, const char* key);
+#endif

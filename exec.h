@@ -5,6 +5,10 @@
  * @date 11/4/2020
  * @file exec.h
  */
+
+#ifndef _EXEC_
+#define _EXEC_
+
 #include <sys/time.h>
 #include "linkedlist.h"
 #include "bintree.h"
@@ -39,3 +43,4 @@ void execRule (BTree* map, Rule* rule);
  * @param map Binary tree to search against for dep verification
  */
 int execRules(LinkedList* order, BTree* map);
+#endif

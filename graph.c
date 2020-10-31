@@ -90,7 +90,7 @@ void visit(BTree* searchTree, LinkedList* l, Node* n) {
         // spots where the dependencies are assumed to be file targets
         // (i.e. not declared in the actual makefile.)
 
-        Node* search_result = bt_get(searchTree, successors[i]);
+        Node* search_result = (Node*)bt_get(searchTree, successors[i]);
         
         if (search_result != NULL) {
             visit(searchTree, l, search_result);

@@ -6,26 +6,14 @@
  * @file makefileparser.h
  */
 
+
+#ifndef _MAKEFILE_PARSER
+#define _MAKEFILE_PARSER
+
+#include <stdio.h>
+
 #include "makefilerule.h"
+#include "graph.h"
 
-// node type?
-
-// interpret
-// "537ps:  537ps.o readproc.o parseopts.o output.o"
-// into target name and dep names
-
-char* getline(); // follows the rules
-
-Rule* getRule(); // reads lines and structures information
-
-char* nextCommand(Rule r);
-
-// TODO read Makefile line by line according to rules
-
-// TODO read in a whole rule and return
-// - target
-// - dependency
-// - steps
-
-// TODO do we need a runnable-line representation?
-// TODO do we need a rule representaiton
+int ParseMakefile(FILE* makefile, Graph* graph);
+#endif

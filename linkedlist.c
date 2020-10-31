@@ -78,7 +78,7 @@ void* ll_get(const LinkedList* list, int index) {
         exit(EXIT_FAILURE);
     }
     
-    if (list->size <= index) return -1;
+    if (list->size <= index) return NULL;
 
     struct ll_node_t* curr = list->head;
     for (int i = 0; i < index; i++) {

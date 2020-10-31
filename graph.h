@@ -6,6 +6,8 @@
  * @file graph.h
  */
 
+#ifndef _GRAPH_
+#define _GRAPH_
 #include "bintree.h"
 #include "makefilerule.h"
 #include "linkedlist.h"
@@ -50,3 +52,4 @@ Node* initializeGraphNode(Graph* g, Rule* contents);
  * @return A LinkedList, if no circular dependency is found in visit().
  */
 LinkedList* topologicalSort(Graph* g);
+#endif

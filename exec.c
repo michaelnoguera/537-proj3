@@ -73,17 +73,17 @@ void execRule (BTree* map, Rule* rule) {
     bool outOfDate = false;
 
     time_t targetTime = getModDate(rule->target);
-    if (targetTime == NULL) outOfDate = true;
+    if (targetTime == 0) outOfDate = true;
 
     int i = 0;
     char* depname;
     
-    while (i < rule->numdeps) {
+    while (!outOfDate && i < rule->numdeps) {
         depname = rule->dependencies[i];
         time_t depTime = getModDate(depname);
 
         // No file was found. Assume it's a Rule?
-        if (depTime == NULL) {
+        if (depTime == 0) {
             Rule* result = getRuleFromKey(map, depname);
             // Not found? Then it cannot be satisfied
             if (result == NULL) {
@@ -92,7 +92,7 @@ void execRule (BTree* map, Rule* rule) {
             }
             // If it was found, its timestamp is represented by 0, which is already its value.
         }
-        if (depTime == NULL || depTime > targetTime) outOfDate = true;
+        if (depTime == 0 || depTime > targetTime) outOfDate = true;
         i++;
     }
     
