@@ -116,6 +116,8 @@ void* Reader(void* args) {
             continue;  // do not enqueue oversize line
         }
 
+        printf("[READER] just read: %s\n", line);
+
         q_enqueue(outputQueue, line);
     }
 
