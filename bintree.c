@@ -18,7 +18,7 @@ static BTNode* initializeNode(const char* key, const void* value) {
         perror("NULL is not a valid key");
         exit(EXIT_FAILURE);
     }
-    BTNode* n = (BTNode*)malloc(sizeof(BTNode)+(sizeof(char)*strlen(key)));
+    BTNode* n = (BTNode*)malloc(sizeof(BTNode) + (sizeof(char) * strlen(key)));
     if (n == NULL) {
         perror("Failed to allocate memory for new tree node");
         exit(EXIT_FAILURE);
@@ -105,13 +105,15 @@ static BTNode* insertNodeRecursive(BTNode* p, BTNode* n, int* err) {
     switch ((0 < cmp) - (cmp < 0)) {  // = sign of cmp
     case 0:
         perror("[HELPER] Prevented add with duplicate key, returning 1");
-        *err = 1;   // already a node with this key -> return with error
+        *err = 1;  // already a node with this key -> return with error
         return p;  // do not need to rebalance because nothing happened
         break;
     case -1:
         p->left = insertNodeRecursive(p->left, n, err);  // recur left
+        break;
     case 1:
         p->right = insertNodeRecursive(p->right, n, err);  // recur right
+        break;
     }
 
     // REBALANCE after successful insert

@@ -32,7 +32,7 @@ typedef struct Queue {
  * 
  * @return pointer to new heap-allocated Queue
  */
-Queue* q_initialize(int size);
+Queue* q_initialize(const size_t size);
 
 /**
  * Adds a new Node to the end of a Queue.

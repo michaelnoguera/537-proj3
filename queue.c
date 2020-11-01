@@ -17,7 +17,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-Queue* q_initialize(const int size) {
+Queue* q_initialize(const size_t size) {
     assert(size > 0);
     // Malloc the queue structure
     Queue* q = (Queue*)malloc(sizeof(Queue) + size * sizeof(void*));
@@ -27,7 +27,7 @@ Queue* q_initialize(const int size) {
     }
 
     // Setup queue spots and internal fields
-    for (int i = 0; i < size; i++) {
+    for (size_t i = 0; i < size; i++) {
         q->item[i] = NULL;
     }
 
@@ -63,7 +63,7 @@ void q_enqueue(Queue* q, void* value) {
     pthread_mutex_lock(&q->lock);
 
     // WAIT UNTIL SPACE IF NECESSARY
-    while (q->tail == (q->head + 1) % (q->size))
+    while (q->tail == (q->head + 1) % ((int)q->size))
         pthread_cond_wait(&q->full, &q->lock);
 
     // write at index head

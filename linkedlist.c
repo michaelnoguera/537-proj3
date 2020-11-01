@@ -88,11 +88,31 @@ void* ll_get(const LinkedList* list, int index) {
     return curr->value;
 }
 
+/**
+ * Converts a LinkedList into a fixed-length array of void pointers
+ * 
+ * @param list LinkedList to convert
+ * @return pointer to heap-allocated array of void pointers, or NULL when
+ * invalid input (list can't be NULL, of course!)
+ */
+void** ll_to_array(LinkedList* list) {
+    if (list == NULL) return NULL;
+
+    void** arr = malloc(sizeof(void*) * list->size);
+
+    struct ll_node_t* n = list->head;
+    for (int i = 0; i < list->size; i++) {
+        arr[i] = n->value;
+        n = n->next;
+    }
+
+    return arr;
+}
 
 /**
- * Frees all memory from the specified `LinkedList` and pointees of
- * the pointers it stores.
- * If  `ptr` is NULL, no operation is performed.
+ * Frees all memory from the specified `LinkedList` and pointees of the pointers
+ * it stores.
+ * If `ptr` is NULL, no operation is performed.
  * 
  * @param ptr Pointer to LinkedList to be freed.
  */
@@ -112,4 +132,41 @@ void ll_free(LinkedList* ptr) {
 
     // free list wrapper
     free(ptr);
+}
+
+/**
+ * Frees overhead of the specified `LinkedList` while leaving contents intact. 
+ * Pointers provided to `ll_push` are not freed, but the `LinkedList` and all 
+ * `LinkedListNodes` are.
+ * 
+ * Make sure you have pointers to all values before calling this function.
+ * 
+ * If `ptr` is NULL, no operation is performed.
+ * 
+ * @param ptr Pointer to LinkedList to be freed.
+ */
+void ll_destruct(LinkedList* ptr) {
+    if (ptr == NULL) return;
+    
+    // free all nodes
+    struct ll_node_t* tmp = NULL;
+    while (ptr->head != ptr->tail) {
+        tmp = ptr->head;
+        ptr->head = ptr->head->next;
+        free(tmp);
+    }
+    free(ptr->tail);
+
+    // free list wrapper
+    free(ptr);
+}
+
+void ll_print_strings(LinkedList* list) {
+    if (list == NULL) return;
+
+    struct ll_node_t* n = list->head;
+    for (int i = 0; i < list->size; i++) {
+        printf("%s,", (char*)n->value);
+        n = n->next;
+    }
 }

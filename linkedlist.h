@@ -29,12 +29,54 @@ typedef struct linkedlist_t {
 
 LinkedList* ll_initialize();
 
+/**
+ * Adds a new node to the end of a LinkedList.
+ * 
+ * @param list The list to append to.
+ * @param value Pointer to thing contained within the new node.
+ */
 void ll_push(LinkedList* list, void* value);
 
+/**
+ * Gets the value of the node at an index.
+ * 
+ * @param list The list to search.
+ * @param index The index of the node to be retrieved. Lists are zero-indexed.
+ * @return The value of the node, or NULL if no such node exists.
+ */
 void* ll_get(const LinkedList* list, int index);
 
+/**
+ * Frees all memory from the specified `LinkedList` and pointees of the pointers
+ * it stores.
+ * If `ptr` is NULL, no operation is performed.
+ * 
+ * @param ptr Pointer to LinkedList to be freed.
+ */
 void ll_free(LinkedList* ptr);
 
-void ll_print(const LinkedList* list);
+/**
+ * Converts a LinkedList into a fixed-length array of void pointers
+ * 
+ * @param list LinkedList to convert
+ * @return pointer to heap-allocated array of void pointers, or NULL when
+ * invalid input (list can't be NULL, of course!)
+ */
+void** ll_to_array(LinkedList* list);
+
+/**
+ * Frees overhead of the specified `LinkedList` while leaving contents intact. 
+ * Pointers provided to `ll_push` are not freed, but the `LinkedList` and all 
+ * `LinkedListNodes` are.
+ * 
+ * Make sure you have pointers to all values before calling this function.
+ * 
+ * If `ptr` is NULL, no operation is performed.
+ * 
+ * @param ptr Pointer to LinkedList to be freed.
+ */
+void ll_destruct(LinkedList* ptr);
+
+void ll_print_strings(LinkedList* list);
 
 #endif

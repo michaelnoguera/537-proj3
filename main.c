@@ -14,7 +14,7 @@
 
 int main() {
     Graph* g = initGraph();
-    FILE* makefile = fopen("Makefile", "r");
+    FILE* makefile = fopen("test/simple_testcase/makefile", "r");
     ParseMakefile(makefile, g);
 
     return 0;
