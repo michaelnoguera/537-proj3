@@ -8,9 +8,10 @@
 
 #include "linkedlist.h"
 
-#include <stdio.h>
 #include <assert.h>
 #include <stdbool.h>
+#include <stdio.h>
+#include <string.h>
 
 /**
  * Initializes a new empty LinkedList.
@@ -77,7 +78,7 @@ void* ll_get(const LinkedList* list, int index) {
         perror("Can't get an element from NULL.");
         exit(EXIT_FAILURE);
     }
-    
+
     if (list->size <= index) return NULL;
 
     struct ll_node_t* curr = list->head;
@@ -118,7 +119,7 @@ void** ll_to_array(LinkedList* list) {
  */
 void ll_free(LinkedList* ptr) {
     if (ptr == NULL) return;
-    
+
     // free all nodes
     struct ll_node_t* tmp = NULL;
     while (ptr->head != ptr->tail) {
@@ -147,7 +148,7 @@ void ll_free(LinkedList* ptr) {
  */
 void ll_destruct(LinkedList* ptr) {
     if (ptr == NULL) return;
-    
+
     // free all nodes
     struct ll_node_t* tmp = NULL;
     while (ptr->head != ptr->tail) {
@@ -161,12 +162,52 @@ void ll_destruct(LinkedList* ptr) {
     free(ptr);
 }
 
-void ll_print_strings(LinkedList* list) {
+inline void ll_print(LinkedList* list) {
     if (list == NULL) return;
+    printf("\x1B[4mLinkedList\x1B[0m\n");
+    printf("\t\x1B[31maddr\x1B[0m = %p\n", (void*)list);
+    printf("\t\x1B[31msize\x1B[0m = %i\n", list->size);
+    
+    if (list->size > 0) {
+        //print head ptr
+        printf("\t\x1B[95mhead\x1B[0m");
 
-    struct ll_node_t* n = list->head;
-    for (int i = 0; i < list->size; i++) {
-        printf("%s,", (char*)n->value);
-        n = n->next;
+        // print all nodes
+        struct ll_node_t* n = list->head;
+        const int NODES_ON_LINE = 5;
+        for (int i = 0; i < list->size; i++) {
+            if (i % NODES_ON_LINE == NODES_ON_LINE-1) printf("\n\t");
+            printf("\x1B[2m->\x1B[0m\x1B[33m%i.\x1B[0m\x1B[1m%p\x1B[0m", i, n->value);
+
+            n = n->next;
+        }
+        
+        // print tail ptr
+        printf("\x1B[2m<-\x1B[0m\x1B[95mtail\x1B[0m\n");
+    }
+}
+
+inline void ll_print_as_strings(LinkedList* list) {
+    if (list == NULL) return;
+    printf("\x1B[4mLinkedList\x1B[0m\n");
+    printf("\t\x1B[31maddr\x1B[0m = %p\n", (void*)list);
+    printf("\t\x1B[31msize\x1B[0m = %i\n", list->size);
+
+    if (list->size > 0) {
+        // print head ptr
+        printf("\t\x1B[95mhead\x1B[0m");
+
+        // print all nodes
+        struct ll_node_t* n = list->head;
+        const int NODES_ON_LINE = 5;
+        for (int i = 0; i < list->size; i++) {
+            if (i % NODES_ON_LINE == NODES_ON_LINE-1) printf("\n\t");
+            printf("\x1B[2m->\x1B[0m\x1B[33m%i.\x1B[0m\"\x1B[1m%s\x1B[0m\"", i, (char*)n->value);
+
+            n = n->next;
+        }
+
+        // print tail ptr
+        printf("\x1B[2m<-\x1B[0m\x1B[95mtail\x1B[0m\n");
     }
 }

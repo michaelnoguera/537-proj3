@@ -8,8 +8,8 @@ SCAN_BUILD_DIR=scan-build-out
 all: 537make
 
 # build executable
-537make: main.o exec.o graph.o bintree.o linkedlist.o makefileparser.o queue.o
-	gcc -pthread -o 537make main.o exec.o graph.o bintree.o linkedlist.o makefileparser.o queue.o
+537make: main.o exec.o graph.o bintree.o linkedlist.o makefileparser.o makefilerule.o queue.o
+	gcc -pthread -o 537make main.o exec.o graph.o bintree.o linkedlist.o makefileparser.o makefilerule.o queue.o
 
 main.o: main.c graph.h exec.h makefilerule.h makefileparser.h
 ifeq ($(DEBUG),true)
@@ -46,7 +46,7 @@ else
 	gcc -c -o $@ $< $(CFLAGS)
 endif
 
-makefileparser.o: makefileparser.c makefileparser.h makefilerule.h queue.h graph.h
+makefileparser.o: makefileparser.c makefileparser.h makefilerule.h queue.h graph.h linkedlist.h
 ifeq ($(DEBUG),true)
 	gcc -pthread -g -c -o $@ $< $(CFLAGS)
 else

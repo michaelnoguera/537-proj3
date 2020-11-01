@@ -76,7 +76,7 @@ void** ll_to_array(LinkedList* list);
  * @param ptr Pointer to LinkedList to be freed.
  */
 void ll_destruct(LinkedList* ptr);
-
-void ll_print_strings(LinkedList* list);
+void ll_print(LinkedList* list);
+void ll_print_as_strings(LinkedList* list);
 
 #endif

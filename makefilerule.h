@@ -10,6 +10,8 @@
 #ifndef _MAKEFILE_RULE
 #define _MAKEFILE_RULE
 
+#include <stdio.h>
+
 #include "linkedlist.h"
 #include "time.h"
 
@@ -28,10 +30,10 @@ typedef struct makefile_command_t {
     int linenumber;
 } Command;
 
-// Will want initializeMakefileRule but the others aren't used at the moment. Thoughts?
-/*Rule* initializeMakefileRule()
+/// Construts a new Rule struct with default values.
+Rule* newRule();
 
-char** getDependencies(Rule* rule);
+/// Prints out a text representation of a provided rule
+void printMakefileRule(Rule* r);
 
-char** getCommand(int index)*/
 #endif

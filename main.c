@@ -13,9 +13,8 @@
 #include "makefileparser.h"
 
 int main() {
-    Graph* g = initGraph();
     FILE* makefile = fopen("test/simple_testcase/makefile", "r");
-    ParseMakefile(makefile, g);
+    Graph* g = ParseMakefile(makefile);
 
-    return 0;
+    return EXIT_SUCCESS;
 }

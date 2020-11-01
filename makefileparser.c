@@ -24,14 +24,23 @@
 #include "makefilerule.h"
 #include "queue.h"
 
+// Wrapper struct to pass line numbers along with line contents
 struct line {
     int linenum;
     char* string;
 };
 
+// Input buffer size, lines that exceed this length (including null terminator)
+// result in errors.
 static const size_t MAX_LINE_LEN = 4096;
 
-
+/**
+ * Helper func that prints formatted error messages
+ * 
+ * @param linenum line on which the error occurred
+ * @param msg error message to display
+ * @param badline pointer to bad line, to print
+ */
 static void exitwitherr(int linenum, char* msg, char* badline) {
     fprintf(stderr, "%i: <%s>: %s\n", linenum, msg, badline);
     exit(EXIT_FAILURE);
@@ -41,9 +50,10 @@ static void exitwitherr(int linenum, char* msg, char* badline) {
  * Custom readline() implementation that meets the assignment requirements.
  * Reads from specified file.
  * 
- * @param[in] fp, pointer to the FILE to read from
+ * @param[in] fp pointer to the FILE to read from
  * @param[out] overflow flag to set if input size greater than buffer
- * @param[out]
+ * @param[out] nullchar flag to set if a null character is encountered in the 
+ * middle of a line
  * @param[out] endOfFile flag to set if EOF reached
  * 
  * @return pointer to heap-allocated string on success, NULL and the appropriate
@@ -105,15 +115,15 @@ static char* readerReadLine(FILE* fp, bool* overflow, bool* nullchar, bool* endO
 }
 
 /**
- * Reader thread. Consumes input from stdin and parses it into the first
- * Muncher's queue.
+ * Reader thread. Consumes input from stdin and wraps valid lines into line
+ * structs.
  * 
- * @param outputQueue void* wrapping a Queue*, which is the queue where Reader
- *  should put strings it reads
+ * @param args void* wrapping `[FILE* toOpen, Queue* toPutLinesIn]`
+ * @return void* for thread closure
  * 
  * @details does not close fp
  */
-void* Reader(void* args) {
+static void* Reader(void* args) {
     FILE* fp = ((FILE**)args)[0];
     Queue* outputQueue = ((Queue**)args)[1];
     assert(fp != NULL && outputQueue != NULL);
@@ -129,17 +139,10 @@ void* Reader(void* args) {
         nullchar = false;
         char* string = readerReadLine(fp, &overflow, &nullchar, &endOfFile);
 
-        if (overflow) {
-            exitwitherr(linenum, "line too long", string);
-            // alternatively continue;  // do not enqueue oversize line
-        }
-
-        if (nullchar) {
-            exitwitherr(linenum, "illegal null char in line", string);
-            // alternatively continue;  // do not enqueue invalid line
-        }
-
-        printf("[READER] just read: %s\n", string);
+        if (endOfFile) break;
+        if (string == NULL) exitwitherr(linenum, "error while reading input", string);
+        if (overflow) exitwitherr(linenum, "line too long", string);
+        if (nullchar) exitwitherr(linenum, "illegal null char in line", string);
 
         struct line* wrapper = malloc(sizeof(struct line));
         wrapper->linenum = linenum;
@@ -153,7 +156,8 @@ void* Reader(void* args) {
     pthread_exit(NULL);
 }
 
-static bool isTargetLine(const char* line) {
+/// Returns true if the given line is a valid target, or false otherwise.
+static inline bool isTargetLine(const char* line) {
     assert(line != NULL);
     if (isblank(line[0])) return false;  // target lines start in column 1
     char* colon = index(line, ':');
@@ -164,7 +168,8 @@ static bool isTargetLine(const char* line) {
     return (comment == NULL || colon < comment);
 }
 
-static bool isCommandLine(const char* line) {
+/// Returns true if the given line is a valid command, or false otherwise.
+static inline bool isCommandLine(const char* line) {
     assert(line != NULL);
     if (line[0] != '\t') return false;  // must start with tab
 
@@ -179,8 +184,9 @@ static bool isCommandLine(const char* line) {
     }
 }
 
-static bool isIgnoredLine(const char* line) {
-    assert (line != NULL);
+/// Returns true if the given line can be ignored, or false otherwise.
+static inline bool isIgnoredLine(const char* line) {
+    assert(line != NULL);
     size_t first_non_whitespace_char = strspn(line, "\t ");
 
     if (first_non_whitespace_char == strnlen(line, MAX_LINE_LEN)) return true;
@@ -189,25 +195,15 @@ static bool isIgnoredLine(const char* line) {
     return false;
 }
 
-static Rule* newRule(int linenum) {
-    Rule* rule = malloc(sizeof(Rule));
-
-    rule->target = NULL;
-    rule->numdeps = 0;
-    rule->dependencies = NULL;
-    rule->linenumber = linenum;
-    rule->commands = ll_initialize();
-
-    return rule;
-}
-
 /**
- * Takes strings read as input and makes them into Rules.
+ * Rule constructor thread. Takes strings and makes them into Rules.
  * 
- * @param args void* wrapping a Queue*[2], where `queue[0]` is used for input
- *  to this function and `queue[1]` is used for output.
+ * @param args void* wrapping a
+ * [Queue* inputQueueOfLines, Queue* outputQueueofRules]
+ * 
+ * @return void* for thread closure
  */
-void* RuleConstructor(void* args) {
+static void* RuleConstructor(void* args) {
     Queue* in = ((Queue**)args)[0];
     Queue* out = ((Queue**)args)[1];
     assert(in != NULL && out != NULL);
@@ -215,24 +211,25 @@ void* RuleConstructor(void* args) {
     Rule* rule = NULL;
     struct line* wrapped;
     while ((wrapped = q_dequeue(in)) != NULL) {
-        // UNWRAP
+        // UNWRAP LINE
         char* line = wrapped->string;
-        int linelen = strnlen(line, MAX_LINE_LEN);
         int linenum = wrapped->linenum;
 
-        printf("[RULE CONSTRUCTOR] %s '%s'\n", "received", line);
+        // CASE 1: LINE STARTS A NEW TARGET
         if (isTargetLine(line)) {
+            // 1. This is the start of a new rule, so get rid of any old one and
+            //    make a new one.
             if (rule != NULL) q_enqueue(out, rule);
-            rule = newRule(linenum);
+            rule = newRule();
 
-            printf("[RULE CONSTRUCTOR] line %i is a target\n", linenum);
-
-            // GET TARGET ==> char* target
-            char* target;  //target that will be built by this Rule
-            char* colon;   // location of : delimiter denoting end of target name
+            // 2. Get the target name, and make a copy to use in the Rule.
+            char* target;  // name of target that will be built by this Rule
+            char* colon;   // location of ':' delimiter denoting end of target name
             {
                 colon = strchr(line, ':');
                 size_t targetsize = colon - line;  // as a number of chars
+
+                while (isblank(line[targetsize-1])) targetsize--;
 
                 target = malloc(sizeof(char) * (targetsize + 1));
                 if (target == NULL) {
@@ -242,51 +239,74 @@ void* RuleConstructor(void* args) {
                 strncpy(target, line, targetsize);
                 target[targetsize] = '\0';
             }
-            rule->target = target;
-            printf("[RULE CONSTRUCTOR] ==> name '%s'\n", target);
 
-            // GET DEPENDENCIES ==> char** dep_array
-            int numdeps = 0;
-            char** dependencies;
+            // 3. Get the dependencies and copy them in an array.
+            //    This step uses strtok, so it mutates the input string.
+            int numdeps = 0; // number of dependencies found
+            char** dependencies; // array of dependencies
             {
                 LinkedList* dep_ll = ll_initialize();
 
                 const char dep_delimiters[] = "\t ";
                 char* saveptr = NULL;
+
+                // this loop is destructive to the line of input (b/c strtok)
                 char* dep = strtok_r(colon + 1, dep_delimiters, &saveptr);
-                do {
+                for (; dep != NULL; dep = strtok_r(NULL, dep_delimiters, &saveptr)) {
                     assert(dep != colon);
-                    printf("[RULE CONSTRUCTOR] --> dependency '%s'\n", dep);
-                } while ((dep = strtok_r(NULL, dep_delimiters, &saveptr)) != NULL);
+
+                    // use a copy of the string so deps can be individually freed
+                    char* cpy = malloc(sizeof(char) * (strlen(dep) + 1));
+                    if (cpy == NULL) {
+                        exitwitherr(linenum, "Error allocating memory for target name\n", line);
+                    }
+
+                    strcpy(cpy, dep);
+                    ll_push(dep_ll, cpy);
+                }
 
                 numdeps = dep_ll->size;
                 dependencies = (char**)ll_to_array(dep_ll);
-                ll_print_strings(dep_ll);
                 ll_destruct(dep_ll);  // free overhead while leaving pointees
             }
+
+            // 4. All needed information found, construct Rule for this target
+            rule->target = target;
+            rule->linenumber = linenum;
             rule->numdeps = numdeps;
             rule->dependencies = dependencies;
+            // rule->commands was initialized by rule constructor, and will be
+            // populated by CASE 2
+        // CASE 2: LINE IS A COMMAND FOR THE CURRENT TARGET
         } else if (isCommandLine(line)) {
-            char* command;
+            if (rule == NULL) exitwitherr(linenum, "no target to add command to", line);
+
+            // Copy the command string into the current Rule, cropping spaces
+            // off the front and comments off the end
+            char* command = NULL;
             {
-                size_t commandstart = strspn(line, "\t ");
-                size_t commandsize = linelen-commandstart;  // as a number of chars
-                printf("command start: %li, command size: %li\n", commandstart, commandsize);
+                char* start = line + strspn(line, "\t ");
 
-                if (commandsize <= 0) {
+                // find command end, handling comments and ignoring escaped ones
+                char* end = strchrnul(line, '#');
+                assert(end > line);
+                while (*end == '#' && end[-1] == '\\')
+                    end = strchrnul(end+1, '#');
+
+                size_t size = end - start;  // as a number of chars
+
+                if (size <= 0)
                     exitwitherr(linenum, "command must have positive length", line);
-                }
-                command = malloc(sizeof(char) * (commandsize + 1));
-                if (command == NULL) {
-                    exitwitherr(linenum, "error allocating memory to hold line", line);
-                }
 
-                strncpy(command, line, commandsize);
-                command[commandsize] = '\0';
+                command = malloc(sizeof(char) * (size + 1));
+                if (command == NULL) exitwitherr(linenum, "mem alloc failed", line);
+
+                strncpy(command, start, size);
+                command[size] = '\0';
             }
             ll_push(rule->commands, command);
         } else if (isIgnoredLine(line)) {
-            printf("[RULE CONSTRUCTOR] (skipping empty line)\n");
+            ;  // ignore line
         } else {
             exitwitherr(linenum, "line is invalid-not a target, command, comment, or blank", line);
         }
@@ -300,44 +320,47 @@ void* RuleConstructor(void* args) {
 }
 
 /**
- * Adds Rules to the specified Graph as they are recieved from inputQueue.
+ * Grapher thread. Adds Rules to the specified Graph as they are recieved from
+ * inputQueue.
  * 
- * @param args arguments wrapped in a void*[2]: [0] is the `Queue* inputQueue`,
- * which delivers Rule*s to be added to the graph. [1] is the `Graph* graph`,
- * where the rules are to be stored
+ * @param args void* wrapping a [Queue* inputQueueOfRules, Graph* toAddRulesTo]
  * 
  * @return void* for thread closure
  */
-void* Grapher(void* args) {
-    Queue* in = ((Queue**)args)[0];  //TODO verify this doesn't lead to memory alignment errors
+static void* Grapher(void* args) {
+    Queue* in = ((Queue**)args)[0];
     Graph* graph = ((Graph**)args)[1];
     assert(in != NULL && graph != NULL);
 
-    //Rule* next;
+    Rule* next;
 
-    //TODO count number of dependencies
-
-    // add each rule to the graph
-    //while ((next = (Rule*)q_dequeue(in)) != NULL)
-    //    initializeGraphNode(graph, next);
+    while ((next = (Rule*)q_dequeue(in)) != NULL) {
+        printMakefileRule(next);
+        initializeGraphNode(graph, next);
+    }
 
     pthread_exit(NULL);  // return successfully
 }
 
-// TODO read Makefile line by line according to rules
-
-// TODO read in a whole rule and return
-// - target
-// - dependency
-// - steps
-
-// TODO do we need a runnable-line representation?
-// TODO do we need a rule representaiton
-
-int ParseMakefile(FILE* makefile, Graph* graph) {
+/**
+ * Parses a makefile into its dependency graph representation
+ * 
+ * @param makefile file to parse
+ * @return Graph* of makefile Rules that contains all entries from the makefile,
+ * or exits gracefully upon error.
+ * 
+ * @example
+ * ```C
+ * FILE* makefile = fopen("test/simple_testcase/makefile", "r");
+ * Graph* g = ParseMakefile(makefile);
+ * ```
+ */
+Graph* ParseMakefile(FILE* makefile) {
     pthread_t reader_id;
     pthread_t ruleConstructor_id;
     pthread_t grapher_id;
+
+    Graph* graph = initGraph();
 
     const int QUEUE_SIZE = 25;
     Queue* readerToRuleConstructor = q_initialize(QUEUE_SIZE);
@@ -379,5 +402,5 @@ int ParseMakefile(FILE* makefile, Graph* graph) {
         exit(EXIT_FAILURE);
     }
 
-    return EXIT_SUCCESS;
+    return graph;
 }
