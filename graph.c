@@ -100,17 +100,9 @@ void visit(BTree* searchTree, LinkedList* l, GNode* n) {
     ll_push(l, n->contents);
 }
 
-// Topological sort
-/**
- * Performs a topological sort within a subgraph of g
- * 
- * @param[in] g graph containing makefile rule
- * @param[in] NodeStringKey target to build
- * @return LinkedList containing topological ordering or NULL upon target not 
- * found
- */
-LinkedList* topologicalSortFromNode(Graph* g, char* NodeStringKey) {
+LinkedList* topologicalSortFromNode(Graph* g, GNode* root) {
     assert(g != NULL);
+    assert(root != NULL);
 
     LinkedList* sorted;
 
@@ -119,19 +111,7 @@ LinkedList* topologicalSortFromNode(Graph* g, char* NodeStringKey) {
         exit(EXIT_FAILURE);
     }
 
-    GNode* result = (GNode*)bt_get(g->searchtree, NodeStringKey);
-
-    if (result == NULL) {
-        return NULL;
-    }
-
-    //struct ll_node_t* curr = bt_get(g->bintree, NodeSt;
-    //for (int i = 0; i < g->size; i++) {
-    //    if (((Node*)curr->value)->mark == UNVISITED) {
-    visit(g->searchtree, sorted, result);
-    //    }
-    //   curr = curr->next;
-    //}
+    visit(g->searchtree, sorted, root);
 
     return sorted;
 }

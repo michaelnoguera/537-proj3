@@ -14,10 +14,23 @@
 #include "makefilerule.h"
 
 int main(int argc, char** argv) {
-    //FILE* makefile = fopen("test/simple_testcase/makefile", "r");
-    //Graph* g = ParseMakefile(makefile);
-    //BTree* map = g->searchtree;
-    //LinkedList* ordering = topologicalSortFromNode(g, argv[1]);
+    FILE* makefile = fopen("makefile", "r");
+    Graph* g = ParseMakefile(makefile);
+    BTree* map = g->searchtree;
+    LinkedList* ordering;
+
+    if (argc <= 1) {
+        fprintf(stderr, "ERROR: Must specify a target after 'make'.\n");
+        exit(EXIT_FAILURE);
+    } else {
+        GNode* result = (GNode*)bt_get(g->searchtree, argv[1]);
+        if (result == NULL) {
+            fprintf(stderr, "ERROR: '%s' is not a valid target.\n", argv[1]);
+            exit(EXIT_FAILURE);
+        } else {
+            ordering = topologicalSortFromNode(g, result);
+        }
+    }
 
     //newCommandFromString("one two three four five");
     newCommandFromString("one  two  three  four  five");

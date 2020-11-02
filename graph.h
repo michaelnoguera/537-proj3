@@ -57,9 +57,8 @@ LinkedList* topologicalSort(Graph* g);
  * Performs a topological sort within a subgraph of g
  * 
  * @param[in] g graph containing makefile rule
- * @param[in] NodeStringKey target to build
- * @return LinkedList containing topological ordering or NULL upon target not 
- * found
+ * @param[in] root target node to build (root of tree)
+ * @return LinkedList containing topological ordering
  */
-LinkedList* topologicalSortFromNode(Graph* g, char* NodeStringKey);
+LinkedList* topologicalSortFromNode(Graph* g, GNode* root);
 #endif
