@@ -1,19 +1,21 @@
 #include "exec.h"
 
-#include <sys/types.h>
-#include <sys/stat.h>
-#include <sys/wait.h>
 #include <fcntl.h>
-#include <unistd.h>
-
 #include <stdbool.h>
 #include <stdio.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 //TODO: properly implement return value
-int execCommand(Command* command) {
+int execCommand(char* command) {
+    printf("%s\n", command);  // TODO DELETE THIS DEBUG MOCK
+    return 1;
+
+    /*
     pid_t child_pid;
     int status;
-    
     child_pid = fork();
     if(child_pid < 0) {
         // there was an error calling fork
@@ -23,17 +25,17 @@ int execCommand(Command* command) {
         // CHILD PROCESS
         // use execvp() to start new command
         printf("command: %s\n", *command->argv);
-        if (execvp(*command->argv, command->argv) < 0) {     /* execute the command  */
+        if (execvp(*command->argv, command->argv) < 0) {  // execute the command
                perror("Error calling exec");
                exit(1);
         }
     } else {
         // PARENT PROCESS
         // wait for child process to finish
-        while (wait(&status) != child_pid)       /* wait for completion  */
+        while (wait(&status) != child_pid)     // wait for completion
             ;
     }
-    return status;
+    return status;*/
 }
 
 time_t getModDate(char* filename) {
@@ -47,13 +49,12 @@ time_t getModDate(char* filename) {
         return 0;
     }
     struct stat filestats;
-     
+
     if (fstat(fd, &filestats) != 0) {
         return 0;
     } else {
         return filestats.st_mtime;
     }
-
 }
 
 /**
@@ -62,12 +63,12 @@ time_t getModDate(char* filename) {
  * @param map structure to search
  * @param key string key to search for
  * @return pointer to Rule with the name `key`
- */ 
+ */
 static Rule* getRuleFromKey(BTree* map, char* key) {
     return (Rule*)bt_get(map, key);
 }
 
-void execRule (BTree* map, Rule* rule) {
+void execRule(BTree* map, Rule* rule) {
     // guaranteed dependencies are already complete
 
     bool outOfDate = false;
@@ -77,7 +78,7 @@ void execRule (BTree* map, Rule* rule) {
 
     int i = 0;
     char* depname;
-    
+
     while (!outOfDate && i < rule->numdeps) {
         depname = rule->dependencies[i];
         time_t depTime = getModDate(depname);
@@ -95,11 +96,11 @@ void execRule (BTree* map, Rule* rule) {
         if (depTime == 0 || depTime > targetTime) outOfDate = true;
         i++;
     }
-    
+
     if (outOfDate) {
         LinkedListNode* curr_command = (rule->commands)->head;
         for (int i = 0; i < rule->commands->size; i++) {
-            execCommand((Command*)curr_command->value);
+            execCommand(curr_command->value);
             curr_command = curr_command->next;
         }
     }

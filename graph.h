@@ -23,7 +23,7 @@ typedef struct g_Graph_t {
 typedef struct g_Node_t {
     enum Status mark;
     Rule* contents;
-} Node;
+} GNode;
 
 /**
  * Initialize a new graph, and initialize all of its constituent data structures (LinkedList, BTree) as well.
@@ -42,7 +42,7 @@ Graph* initGraph();
  * 
  * @return A pointer to the new node created, or NULL if an error occurred.
  */
-Node* initializeGraphNode(Graph* g, Rule* contents);
+GNode* initializeGraphNode(Graph* g, Rule* contents);
 
 /**
  * Sorts the specified graph topologically, i.e. returns an ordered linked list of the nodes based on which nodes depend on each other.
@@ -52,4 +52,14 @@ Node* initializeGraphNode(Graph* g, Rule* contents);
  * @return A LinkedList, if no circular dependency is found in visit().
  */
 LinkedList* topologicalSort(Graph* g);
+
+/**
+ * Performs a topological sort within a subgraph of g
+ * 
+ * @param[in] g graph containing makefile rule
+ * @param[in] NodeStringKey target to build
+ * @return LinkedList containing topological ordering or NULL upon target not 
+ * found
+ */
+LinkedList* topologicalSortFromNode(Graph* g, char* NodeStringKey);
 #endif

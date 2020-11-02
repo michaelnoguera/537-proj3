@@ -7,13 +7,13 @@
  * @file graph.c
  */
 
-#include "linkedlist.h"
 #include "graph.h"
 
-#include <stdio.h>
 #include <assert.h>
+#include <stdio.h>
 #include <stdlib.h>
 
+#include "linkedlist.h"
 
 // Graph constructor
 Graph* initGraph() {
@@ -38,13 +38,13 @@ Graph* initGraph() {
 }
 
 // Graph node initializer.
-Node* initializeGraphNode(Graph* g, Rule* contents) {
+GNode* initializeGraphNode(Graph* g, Rule* contents) {
     if (g == NULL) {
         perror("Can't add a graph node to NULL.");
         exit(EXIT_FAILURE);
     }
 
-    Node* new_node = (Node*)malloc(sizeof(Node));
+    GNode* new_node = (GNode*)malloc(sizeof(GNode));
     if (new_node == NULL) {
         perror("Failed to allocate memory for new graph node.");
         exit(EXIT_FAILURE);
@@ -56,7 +56,7 @@ Node* initializeGraphNode(Graph* g, Rule* contents) {
     assert(g->nodes != NULL);
     assert(g->searchtree != NULL);
 
-    bt_insert(g->searchtree, (new_node->contents)->target, new_node); // Add to BST
+    bt_insert(g->searchtree, (new_node->contents)->target, new_node);  // Add to BST
     ll_push(g->nodes, new_node);
     g->size++;
 
@@ -71,7 +71,7 @@ Node* initializeGraphNode(Graph* g, Rule* contents) {
  * @param n Currently visited node
  * 
  */
-void visit(BTree* searchTree, LinkedList* l, Node* n) {
+void visit(BTree* searchTree, LinkedList* l, GNode* n) {
     assert(l != NULL);
     assert(n != NULL);
 
@@ -85,13 +85,12 @@ void visit(BTree* searchTree, LinkedList* l, Node* n) {
 
     char** successors = n->contents->dependencies;
     for (int i = 0; i < n->contents->numdeps; i++) {
-
         // Some elements of successors will map to NULL, this corresponds to
         // spots where the dependencies are assumed to be file targets
         // (i.e. not declared in the actual makefile.)
 
-        Node* search_result = (Node*)bt_get(searchTree, successors[i]);
-        
+        GNode* search_result = (GNode*)bt_get(searchTree, successors[i]);
+
         if (search_result != NULL) {
             visit(searchTree, l, search_result);
         }
@@ -102,6 +101,41 @@ void visit(BTree* searchTree, LinkedList* l, Node* n) {
 }
 
 // Topological sort
+/**
+ * Performs a topological sort within a subgraph of g
+ * 
+ * @param[in] g graph containing makefile rule
+ * @param[in] NodeStringKey target to build
+ * @return LinkedList containing topological ordering or NULL upon target not 
+ * found
+ */
+LinkedList* topologicalSortFromNode(Graph* g, char* NodeStringKey) {
+    assert(g != NULL);
+
+    LinkedList* sorted;
+
+    if ((sorted = ll_initialize()) == NULL) {
+        perror("Error initializing linked list for new graph.");
+        exit(EXIT_FAILURE);
+    }
+
+    GNode* result = (GNode*)bt_get(g->searchtree, NodeStringKey);
+
+    if (result == NULL) {
+        return NULL;
+    }
+
+    //struct ll_node_t* curr = bt_get(g->bintree, NodeSt;
+    //for (int i = 0; i < g->size; i++) {
+    //    if (((Node*)curr->value)->mark == UNVISITED) {
+    visit(g->searchtree, sorted, result);
+    //    }
+    //   curr = curr->next;
+    //}
+
+    return sorted;
+}
+
 LinkedList* topologicalSort(Graph* g) {
     assert(g != NULL);
 
@@ -114,8 +148,8 @@ LinkedList* topologicalSort(Graph* g) {
 
     struct ll_node_t* curr = g->nodes->head;
     for (int i = 0; i < g->size; i++) {
-        if (((Node*)curr->value)->mark == UNVISITED) {
-            visit(g->searchtree, sorted, ((Node*)curr->value));
+        if (((GNode*)curr->value)->mark == UNVISITED) {
+            visit(g->searchtree, sorted, ((GNode*)curr->value));
         }
         curr = curr->next;
     }

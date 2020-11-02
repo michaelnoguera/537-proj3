@@ -17,10 +17,10 @@
 /**
  * Execute the given command using fork() and execvp()
  * @details wrapper around bt_get that type casts for Rules
- * @param command Command struct to execute
+ * @param command command to execute
  * @return status value of the child process
  */ 
-int execCommand(Command* command);
+int execCommand(char* command);
 
 /**
  * Helper method to get the modification time on a file

@@ -23,13 +23,6 @@ typedef struct makefile_rule_t {
     int linenumber;
 } Rule;
 
-typedef struct makefile_command_t {
-    char** argv;
-    char* input;
-    char* output;
-    int linenumber;
-} Command;
-
 /// Construts a new Rule struct with default values.
 Rule* newRule();
 

@@ -12,9 +12,13 @@
 #include "exec.h"
 #include "makefileparser.h"
 
-int main() {
-    FILE* makefile = fopen("test/simple_testcase/makefile", "r");
+int main(int argc, char** argv) {
+    FILE* makefile = fopen("makefile", "r");
     Graph* g = ParseMakefile(makefile);
+    BTree* map = g->searchtree;
+    LinkedList* ordering = topologicalSortFromNode(g, argv[1]);
+
+    execRules(ordering, map);
 
     return EXIT_SUCCESS;
 }
