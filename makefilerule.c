@@ -35,16 +35,16 @@ Command* newCommand() {
     return command;
 }
 
-static const size_t MAX_LINE_LEN = 4096;
+//static const size_t MAX_LINE_LEN = 4096;
 
-static void printSubstring(char* string, char* start, char* end, int color) {
+/*static void printSubstring(char* string, char* start, char* end, int color) {
     for (size_t i = 0; i < strlen(string); i++) {
         if (start == string+i) printf("\x1B[30;%im", color);
         printf("%c", string[i]);
         if (end == string+i) printf("\x1B[m");
     }
     printf("\x1B[0m\n");
-}
+}*/
 
 Command* newCommandFromString(char* string) {
     if (string == NULL) {
@@ -66,22 +66,22 @@ Command* newCommandFromString(char* string) {
         // find start and end of desired substring
         char* start = string;
         while (*start == ' ' || *start == '\0' || *start == '\t'){
-            printSubstring(string, start, start, 101);
+            //printSubstring(string, start, start, 101);
             start++;
         }
         end = start + strcspn(start, delimiters);  // auto-scaled to char size
         assert(end > start);
 
-        printSubstring(string, start, end, 103);
+        //printSubstring(string, start, end, 103);
         while (*end == ' ' || *end == '\0' || *end == '\t'){
-            printSubstring(string, end, end, 101);
+            //printSubstring(string, end, end, 101);
             end--;
         }
 
         size_t size = end - start + 1;  // as a number of chars
         assert(size > 0);
 
-        printSubstring(string, start, end, 102);
+        //printSubstring(string, start, end, 102);
 
         // copy substring into a heap-allocated string
         command->executable = malloc(sizeof(char) * (size+1));
@@ -93,7 +93,7 @@ Command* newCommandFromString(char* string) {
         strncpy(command->executable, start, size);
         command->executable[size] = '\0';
 
-        printf("\"%s\"\n", command->executable);
+        //printf("\"%s\"\n", command->executable);
         end++; // increment end so that next argument is parsed correctly
     }
 
@@ -103,22 +103,22 @@ Command* newCommandFromString(char* string) {
         while (*end != '\0') {
             char* start = end;
             while (*start == ' ' || *start == '\0' || *start == '\t'){
-                printSubstring(string, start, start, 101);
+                //printSubstring(string, start, start, 101);
                 start++;
             }
             end = start + strcspn(start, delimiters);  // auto-scaled to char size
             assert(end > start);
 
-            printSubstring(string, start, end, 103);
+            //printSubstring(string, start, end, 103);
             while (*end == ' ' || *end == '\0' || *end == '\t'){
-                printSubstring(string, end, end, 101);
+                //printSubstring(string, end, end, 101);
                 end--;
             }
 
             size_t size = end - start + 1;  // as a number of chars
             assert(size > 0);
 
-            printSubstring(string, start, end, 102);
+            //printSubstring(string, start, end, 102);
 
             char* arg = malloc(sizeof(char) * (size+1));
             if (arg == NULL) {
@@ -134,7 +134,7 @@ Command* newCommandFromString(char* string) {
             end++;
         }
     }
-    command->argv = ll_to_array(argv_ll);
+    command->argv = (char**)ll_to_array(argv_ll);
 
 
     // 3. find I/O redirect filenames
