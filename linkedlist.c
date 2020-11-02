@@ -90,6 +90,44 @@ void* ll_get(const LinkedList* list, int index) {
 }
 
 /**
+ * Removes the first node with the specified value from the List
+ * 
+ * @param list LinkedList to remove from
+ * @param value The value to remove
+ * @return a pointer to the removed node, which can be freed or used
+ * elsewhere, or NULL if not found
+ */
+void* ll_removeNode(LinkedList* list, void* value) {
+    if (list == NULL) {
+        perror("NULL is not a valid LinkedList.");
+        exit(EXIT_FAILURE);
+    }
+
+    struct ll_node_t** prevnext = &(list->head);
+    struct ll_node_t* curr = *prevnext;
+    struct ll_node_t* removed = NULL;
+
+    for (int i = 0; i < list->size; i++) {
+        if (curr->value == value) {
+            removed = curr;
+            *prevnext = curr->next;
+        } else {
+            prevnext = &(curr->next);
+            curr = curr->next;
+        }
+    }
+
+    if (list->size == 0) return NULL;
+
+    struct ll_node_t* curr = list->head;
+    for (int i = 0; i < index; i++) {
+        curr = curr->next;
+    }
+
+    return curr->value;
+}
+
+/**
  * Converts a LinkedList into a fixed-length array of void pointers
  * 
  * @param list LinkedList to convert
@@ -167,7 +205,7 @@ inline void ll_print(LinkedList* list) {
     printf("\x1B[4mLinkedList\x1B[0m\n");
     printf("\t\x1B[31maddr\x1B[0m = %p\n", (void*)list);
     printf("\t\x1B[31msize\x1B[0m = %i\n", list->size);
-    
+
     if (list->size > 0) {
         //print head ptr
         printf("\t\x1B[95mhead\x1B[0m");
@@ -176,12 +214,12 @@ inline void ll_print(LinkedList* list) {
         struct ll_node_t* n = list->head;
         const int NODES_ON_LINE = 5;
         for (int i = 0; i < list->size; i++) {
-            if (i % NODES_ON_LINE == NODES_ON_LINE-1) printf("\n\t");
+            if (i % NODES_ON_LINE == NODES_ON_LINE - 1) printf("\n\t");
             printf("\x1B[2m->\x1B[0m\x1B[33m%i.\x1B[0m\x1B[1m%p\x1B[0m", i, n->value);
 
             n = n->next;
         }
-        
+
         // print tail ptr
         printf("\x1B[2m<-\x1B[0m\x1B[95mtail\x1B[0m\n");
     }
@@ -201,7 +239,7 @@ inline void ll_print_as_strings(LinkedList* list) {
         struct ll_node_t* n = list->head;
         const int NODES_ON_LINE = 5;
         for (int i = 0; i < list->size; i++) {
-            if (i % NODES_ON_LINE == NODES_ON_LINE-1) printf("\n\t");
+            if (i % NODES_ON_LINE == NODES_ON_LINE - 1) printf("\n\t");
             printf("\x1B[2m->\x1B[0m\x1B[33m%i.\x1B[0m\"\x1B[1m%s\x1B[0m\"", i, (char*)n->value);
 
             n = n->next;

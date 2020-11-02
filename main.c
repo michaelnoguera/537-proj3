@@ -11,14 +11,20 @@
 #include "graph.h"
 #include "exec.h"
 #include "makefileparser.h"
+#include "makefilerule.h"
 
 int main(int argc, char** argv) {
-    FILE* makefile = fopen("makefile", "r");
-    Graph* g = ParseMakefile(makefile);
-    BTree* map = g->searchtree;
-    LinkedList* ordering = topologicalSortFromNode(g, argv[1]);
+    //FILE* makefile = fopen("test/simple_testcase/makefile", "r");
+    //Graph* g = ParseMakefile(makefile);
+    //BTree* map = g->searchtree;
+    //LinkedList* ordering = topologicalSortFromNode(g, argv[1]);
 
-    execRules(ordering, map);
+    //newCommandFromString("one two three four five");
+    newCommandFromString("one  two  three  four  five");
+    //newCommandFromString("hello world < in > out");
+    //newCommandFromString("one two three four five   ");
+    
+    //execRules(ordering, map);
 
     return EXIT_SUCCESS;
 }

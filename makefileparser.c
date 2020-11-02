@@ -256,7 +256,7 @@ static void* RuleConstructor(void* args) {
                     assert(dep != colon);
 
                     // use a copy of the string so deps can be individually freed
-                    char* cpy = malloc(sizeof(char) * (strlen(dep) + 1));
+                    char* cpy = malloc(sizeof(char) * (strlen(dep)));
                     if (cpy == NULL) {
                         exitwitherr(linenum, "Error allocating memory for target name\n", line);
                     }
@@ -298,7 +298,7 @@ static void* RuleConstructor(void* args) {
                 if (size <= 0)
                     exitwitherr(linenum, "command must have positive length", line);
 
-                command = malloc(sizeof(char) * (size + 1));
+                command = malloc(sizeof(char) * (size));
                 if (command == NULL) exitwitherr(linenum, "mem alloc failed", line);
 
                 strncpy(command, start, size);
