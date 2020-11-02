@@ -134,7 +134,7 @@ Command* newCommandFromString(char* string) {
             end++;
         }
     }
-    ll_print_as_strings(argv_ll);
+    command->argv = ll_to_array(argv_ll);
 
 
     // 3. find I/O redirect filenames

@@ -97,7 +97,7 @@ void* ll_get(const LinkedList* list, int index) {
  * @return a pointer to the removed node, which can be freed or used
  * elsewhere, or NULL if not found
  */
-void* ll_removeNode(LinkedList* list, void* value) {
+/*void* ll_removeNode(LinkedList* list, void* value) {
     if (list == NULL) {
         perror("NULL is not a valid LinkedList.");
         exit(EXIT_FAILURE);
@@ -125,7 +125,7 @@ void* ll_removeNode(LinkedList* list, void* value) {
     }
 
     return curr->value;
-}
+}*/
 
 /**
  * Converts a LinkedList into a fixed-length array of void pointers
