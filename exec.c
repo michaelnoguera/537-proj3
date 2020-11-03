@@ -73,7 +73,7 @@ static Rule* getRuleFromKey(BTree* map, char* key) {
 
 void execRule(BTree* map, Rule* rule) {
     // guaranteed dependencies are already complete
-    printf("\x1B[32m executing %s\e[0m\n", rule->target);
+    printf("\x1B[32m executing %s\x1B[0m\n", rule->target);
 
     bool outOfDate = false;
 
