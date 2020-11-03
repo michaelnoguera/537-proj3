@@ -316,6 +316,7 @@ static void* RuleConstructor(void* args) {
     }
 
     // enqueue null sentinel value
+    if (rule != NULL) q_enqueue(out, rule);
     q_enqueue(out, NULL);
     pthread_exit(NULL);
 }
