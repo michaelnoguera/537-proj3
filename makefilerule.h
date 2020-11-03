@@ -24,7 +24,6 @@ typedef struct makefile_rule_t {
 } Rule;
 
 typedef struct makefile_command_t {
-    char* executable;
     char** argv;
     char* inputfile;
     char* outputfile;

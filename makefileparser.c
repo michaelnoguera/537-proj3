@@ -283,7 +283,7 @@ static void* RuleConstructor(void* args) {
 
             // Copy the command string into the current Rule, cropping spaces
             // off the front and comments off the end
-            char* command = NULL;
+            char* command_string = NULL;
             {
                 char* start = line + strspn(line, "\t ");
 
@@ -298,13 +298,15 @@ static void* RuleConstructor(void* args) {
                 if (size <= 0)
                     exitwitherr(linenum, "command must have positive length", line);
 
-                command = malloc(sizeof(char) * (size));
-                if (command == NULL) exitwitherr(linenum, "mem alloc failed", line);
+                command_string = malloc(sizeof(char) * (size));
+                if (command_string == NULL) exitwitherr(linenum, "mem alloc failed", line);
 
-                strncpy(command, start, size);
-                command[size] = '\0';
+                strncpy(command_string, start, size);
+                command_string[size] = '\0';
             }
-            ll_push(rule->commands, command);
+
+            Command* command = newCommandFromString(command_string);
+            if (command != NULL) ll_push(rule->commands, command);
         } else if (isIgnoredLine(line)) {
             ;  // ignore line
         } else {

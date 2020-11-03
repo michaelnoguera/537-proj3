@@ -27,7 +27,6 @@ Command* newCommand() {
         exit(EXIT_FAILURE);
     }
 
-    command->executable = NULL;
     command->argv = NULL;
     command->inputfile = NULL;
     command->outputfile = NULL;
@@ -58,47 +57,11 @@ Command* newCommandFromString(char* string) {
 
     Command* command = newCommand();  // exits cleanly on error
     const char delimiters[] = " <>\0";
-    char* end;  // make end of each token persist through steps to be used as
-                // start of next section
-    
-    // 1. extract executable name, which must be the first 'word'
-    {
-        // find start and end of desired substring
-        char* start = string;
-        while (*start == ' ' || *start == '\0' || *start == '\t'){
-            //printSubstring(string, start, start, 101);
-            start++;
-        }
-        end = start + strcspn(start, delimiters);  // auto-scaled to char size
-        assert(end > start);
+    char* end = string;  // make end of each token persist through steps to be used as
+                         // start of next section
 
-        //printSubstring(string, start, end, 103);
-        while (*end == ' ' || *end == '\0' || *end == '\t'){
-            //printSubstring(string, end, end, 101);
-            end--;
-        }
-
-        size_t size = end - start + 1;  // as a number of chars
-        assert(size > 0);
-
-        //printSubstring(string, start, end, 102);
-
-        // copy substring into a heap-allocated string
-        command->executable = malloc(sizeof(char) * (size+1));
-        if (command == NULL) {
-            perror("Memory allocation failed while interpreting command");
-            exit(EXIT_FAILURE);
-        }
-
-        strncpy(command->executable, start, size);
-        command->executable[size] = '\0';
-
-        //printf("\"%s\"\n", command->executable);
-        end++; // increment end so that next argument is parsed correctly
-    }
-
-    // 2. extract arguments which follow the command name
     LinkedList* argv_ll = ll_initialize();
+    // 1. extract arguments which follow the command name
     {
         while (*end != '\0') {
             char* start = end;
@@ -137,7 +100,7 @@ Command* newCommandFromString(char* string) {
     command->argv = (char**)ll_to_array(argv_ll);
 
 
-    // 3. find I/O redirect filenames
+    // 2. find I/O redirect filenames
     //if (strstr())
 
     // manually

@@ -14,7 +14,15 @@
 #include "makefilerule.h"
 
 int main(int argc, char** argv) {
-    FILE* makefile = fopen("makefile", "r");
+    FILE* makefile;
+    makefile=fopen("makefile", "r");
+    if (makefile==NULL) { 
+        makefile = fopen("Makefile", "r");
+        if (makefile==NULL) {
+            fprintf(stderr,"ERROR: No makefile found and it was not specified on the command line.\n");
+            exit(EXIT_FAILURE);
+        }
+    }
     Graph* g = ParseMakefile(makefile);
     BTree* map = g->searchtree;
     LinkedList* ordering;
@@ -33,11 +41,12 @@ int main(int argc, char** argv) {
     }
 
     //newCommandFromString("one two three four five");
-    newCommandFromString("one  two  three  four  five");
+    //Command* c = newCommandFromString("ls -l -a -h");
+    //execCommand(c);
     //newCommandFromString("hello world < in > out");
     //newCommandFromString("one two three four five   ");
     
-    //execRules(ordering, map);
+    execRules(ordering, map);
 
     return EXIT_SUCCESS;
 }

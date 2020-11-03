@@ -9,11 +9,11 @@
 #include <unistd.h>
 
 //TODO: properly implement return value
-int execCommand(char* command) {
-    printf("%s\n", command);  // TODO DELETE THIS DEBUG MOCK
-    return 1;
+int execCommand(Command* command) {
+    /*printf("%s\n", command);  // TODO DELETE THIS DEBUG MOCK
+    return 1;*/
 
-    /*
+    
     pid_t child_pid;
     int status;
     child_pid = fork();
@@ -35,7 +35,7 @@ int execCommand(char* command) {
         while (wait(&status) != child_pid)     // wait for completion
             ;
     }
-    return status;*/
+    return status;
 }
 
 time_t getModDate(char* filename) {

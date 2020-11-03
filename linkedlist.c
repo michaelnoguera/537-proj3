@@ -137,13 +137,15 @@ void* ll_get(const LinkedList* list, int index) {
 void** ll_to_array(LinkedList* list) {
     if (list == NULL) return NULL;
 
-    void** arr = malloc(sizeof(void*) * list->size);
+    void** arr = malloc(sizeof(void*) * list->size+1);
 
     struct ll_node_t* n = list->head;
     for (int i = 0; i < list->size; i++) {
         arr[i] = n->value;
         n = n->next;
     }
+
+    arr[list->size] = NULL;
 
     return arr;
 }
