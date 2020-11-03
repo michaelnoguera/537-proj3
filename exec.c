@@ -104,7 +104,10 @@ void execRule(BTree* map, Rule* rule) {
     if (outOfDate) {
         LinkedListNode* curr_command = (rule->commands)->head;
         for (int i = 0; i < rule->commands->size; i++) {
-            execCommand(curr_command->value);
+            if (execCommand(curr_command->value) != 0) {
+                fprintf(stderr, "ERROR: Command failed, stopping. \n");
+                exit(EXIT_FAILURE);
+            }
             curr_command = curr_command->next;
         }
     }
