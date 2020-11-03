@@ -337,7 +337,7 @@ static void* Grapher(void* args) {
     Rule* next;
 
     while ((next = (Rule*)q_dequeue(in)) != NULL) {
-        printMakefileRule(next);
+    //    printMakefileRule(next);
         initializeGraphNode(graph, next);
     }
 

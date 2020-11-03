@@ -1,6 +1,6 @@
 # See README for notes about project organization
 
-CFLAGS=-std=c99 -Wall -Wextra -pedantic
+CFLAGS=-Wall -Wextra -pedantic
 SCAN_BUILD_DIR=scan-build-out
 
 .PHONY:clean test all scan-build scan-view

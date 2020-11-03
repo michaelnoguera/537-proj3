@@ -14,11 +14,11 @@
 struct bt_node_t;
 
 typedef struct bt_node_t {
+    const char* key;    /// pointer to string key
+    const void* value;  /// pointer to whatever value is to be stored
+    int bf;
     struct bt_node_t* left;
     struct bt_node_t* right;
-    int bf;
-    const void* value;  /// pointer to whatever value is to be stored
-    char key[];    /// pointer to string key
 } BTNode;
 
 /// Implementation of AVL Balanced Binary Tree

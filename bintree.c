@@ -2,15 +2,19 @@
  * CS 537 Programming Assignment 3 (Fall 2020)
  * @author Michael Noguera
  * @date 11/4/2020
- * @brief Implementation of AVL balanced binary tree with string keys and void* values.
+ * @brief Implementation of binary tree with string keys and void* values.
  * @file bintree.c
  */
 
 #include "bintree.h"
 
+#include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+// This was supposed to be an AVL tree, but it was not maintaining balance, so
+// the rotate code is commented out
 
 // node constructor
 static BTNode* initializeNode(const char* key, const void* value) {
@@ -18,17 +22,17 @@ static BTNode* initializeNode(const char* key, const void* value) {
         perror("NULL is not a valid key");
         exit(EXIT_FAILURE);
     }
-    BTNode* n = (BTNode*)malloc(sizeof(BTNode) + (sizeof(char) * strlen(key)));
+    BTNode* n = (BTNode*)malloc(sizeof(BTNode) + (sizeof(char) * (strlen(key)+1)));
     if (n == NULL) {
         perror("Failed to allocate memory for new tree node");
         exit(EXIT_FAILURE);
     }
+    n->key = key;
     n->value = value;
-    strcpy(n->key, key);
+    n->bf = 0;
     n->left = NULL;
     n->right = NULL;
     //n->height = 0;
-    n->bf = 0;
 
     return n;
 }
@@ -44,51 +48,69 @@ BTree* bt_initializeTree() {
     return t;
 }
 
-/*
-static int heightOfNode(BTNode* n) {
+/*static int heightOfNode(const BTNode* n) {
     if (n == NULL) return 0;
-    return n->height;
+    if (heightOfNode(n->left) > heightOfNode(n->right))
+        return heightOfNode(n->left) + 1;
+    else return heightOfNode(n->right) + 1;
+}*/
+
+void bt_print_in_order_helper(const BTNode* n) {
+    if (n == NULL) return;
+    bt_print_in_order_helper(n->left);
+    //printf("%s (%i) [%i]\n", n->key, heightOfNode(n), heightOfNode(n->left)-heightOfNode(n->right));
+    bt_print_in_order_helper(n->right);
 }
-*/
+
+void bt_print(const BTree* bt) {
+    bt_print_in_order_helper(bt->root);
+}
 
 static BTNode* rightRotate(BTNode* a) {
+
     if (a == NULL || a->right == NULL) {
         perror("Invalid rotation requested, involves a null node");
         exit(EXIT_FAILURE);
     }
 
     // move subtrees
-    BTNode* b = a->right;
-    a->right = b->left;
-    b->left = a;
+    //BTNode* b = a->left;
+    //a->left = b->right;
+    //b->left = a;
 
     // fix balance factors
-    a->bf = a->bf + 1 - (b->bf < 0 ? b->bf : 0);
-    b->bf = b->bf + 1 + (a->bf > 0 ? a->bf : 0);
+    //a->bf = heightOfNode(a->left)-heightOfNode(a->right);
+    //b->bf = heightOfNode(b->left)-heightOfNode(b->right);
+    //a->bf = a->bf + 1 - (b->bf < 0 ? b->bf : 0);
+    //b->bf = b->bf + 1 + (a->bf > 0 ? a->bf : 0);
+
+    //assert(a->bf < 2 && a->bf > -2);
+    //assert(b->bf < 2 && b->bf > -2);
 
     // point to the new top node
-    a = b;
-
     return a;
 }
 
 static BTNode* leftRotate(BTNode* a) {
-    if (a == NULL || a->right == NULL) {
+    if (a == NULL || a->left == NULL) {
         perror("Invalid rotation requested, involves a null node.");
         exit(EXIT_FAILURE);
     }
 
     // move subtrees
-    BTNode* b = a->left;
-    a->left = b->right;
-    b->left = a;
+    //BTNode* b = a->right;
+    //a->right = b->left;
+    //b->left = a;
 
     // fix balance factors
-    a->bf = a->bf - 1 - (b->bf > 0 ? b->bf : 0);
-    b->bf = b->bf - 1 + (a->bf < 0 ? b->bf : 0);
+    //a->bf = heightOfNode(a->left)-heightOfNode(a->right);
+    //b->bf = heightOfNode(b->left)-heightOfNode(b->right);
+    //a->bf = a->bf - 1 - (b->bf > 0 ? b->bf : 0);
+    //b->bf = b->bf - 1 + (a->bf < 0 ? b->bf : 0);
 
+    //assert(a->bf < 2 && a->bf > -2);
+    //assert(b->bf < 2 && b->bf > -2);
     // point to the new top node
-    a = b;
 
     return a;
 }
@@ -107,27 +129,32 @@ static BTNode* insertNodeRecursive(BTNode* p, BTNode* n, int* err) {
         perror("[HELPER] Prevented add with duplicate key, returning 1");
         *err = 1;  // already a node with this key -> return with error
         return p;  // do not need to rebalance because nothing happened
-        break;
     case -1:
         p->left = insertNodeRecursive(p->left, n, err);  // recur left
+        p->bf++;
         break;
     case 1:
         p->right = insertNodeRecursive(p->right, n, err);  // recur right
+        p->bf--;
         break;
     }
 
     // REBALANCE after successful insert
     if (n->bf > 1) {
         if (n->key < p->left->key) {
+            //printf("SINGLE RIGHT ROTATE\n");
             n = rightRotate(n);
         } else if (n->key > p->left->key) {
+            //printf("LEFT RIGHT ROTATE\n");
             n->left = leftRotate(n->left);
             n = rightRotate(n);
         }
     } else if (n->bf < -1) {
         if (n->key < p->right->key) {
+            //printf("SINGLE LEFT ROTATE\n");
             n = leftRotate(n);
         } else if (n->key < p->right->key) {
+            //printf("RIGHT LEFT ROTATE\n");
             n->right = rightRotate(n->right);
             n = leftRotate(n);
         }
@@ -200,15 +227,7 @@ const void* bt_get(const BTree* tree, const char* key) {
     return getHelper(tree->root, key);
 }
 
-void bt_print_helper(const BTNode* bn) {
-    printf("%s\n",bn->key);
-    if (bn->left != NULL) bt_print_helper(bn->left);
-    if (bn->right != NULL) bt_print_helper(bn->right);
-}
 
-void bt_print(const BTree* bt) {
-    bt_print_helper(bt->root);
-}
 /* TODO implement remove if we need it
 BTNode bt_removeHelper(BTNode p, char** key, int err) {
     // BASE CASE: fell off tree --> not found

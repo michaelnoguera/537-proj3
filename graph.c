@@ -56,7 +56,7 @@ GNode* initializeGraphNode(Graph* g, Rule* contents) {
     assert(g->nodes != NULL);
     assert(g->searchtree != NULL);
 
-    printf("initialized: %s\n", (new_node->contents)->target);
+    //printf("initialized: %s\n", (new_node->contents)->target);
     assert(bt_insert(g->searchtree, (new_node->contents)->target, new_node) == 0);  // Add to BST
     ll_push(g->nodes, new_node);
     g->size++;
@@ -76,7 +76,7 @@ void visit(BTree* searchTree, LinkedList* l, GNode* n) {
     assert(l != NULL);
     assert(n != NULL);
 
-    printf("Visiting target: %s\n", n->contents->target);
+    //printf("Visiting target: %s\n", n->contents->target);
 
     if (n->mark == VISITED) return;
     if (n->mark == VISITING) {
@@ -91,7 +91,7 @@ void visit(BTree* searchTree, LinkedList* l, GNode* n) {
         // Some elements of successors will map to NULL, this corresponds to
         // spots where the dependencies are assumed to be file targets
         // (i.e. not declared in the actual makefile.)
-        printf("(From %s) successor: %s\n", n->contents->target, successors[i]);
+        //printf("(From %s) successor: %s\n", n->contents->target, successors[i]);
         GNode* search_result = (GNode*)bt_get(searchTree, successors[i]);
 
         if (search_result != NULL) {
@@ -101,7 +101,7 @@ void visit(BTree* searchTree, LinkedList* l, GNode* n) {
 
     n->mark = VISITED;
     ll_push(l, n->contents);
-    printf("(%s) we done\n", n->contents->target);
+    //printf("(%s) we done\n", n->contents->target);
 }
 
 LinkedList* topologicalSortFromNode(Graph* g, GNode* root) {
