@@ -9,10 +9,13 @@
 #include <unistd.h>
 
 //TODO: properly implement return value
-int execCommand(Command* command) {
-    /*printf("%s\n", command);  // TODO DELETE THIS DEBUG MOCK
-    return 1;*/
+int execCommand(char* command_string) {
 
+    Command* command = newCommandFromString(command_string);
+    if (command == NULL) {
+        fprintf(stderr, "ERROR: Could not parse command for rule");
+        exit(EXIT_FAILURE);
+    }
     
     pid_t child_pid;
     int status;
@@ -70,6 +73,7 @@ static Rule* getRuleFromKey(BTree* map, char* key) {
 
 void execRule(BTree* map, Rule* rule) {
     // guaranteed dependencies are already complete
+    printf("\x1B[32m executing %s\e[0m\n", rule->target);
 
     bool outOfDate = false;
 

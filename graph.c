@@ -75,6 +75,8 @@ void visit(BTree* searchTree, LinkedList* l, GNode* n) {
     assert(l != NULL);
     assert(n != NULL);
 
+    printf("Visiting target: %s\n", n->contents->target);
+
     if (n->mark == VISITED) return;
     if (n->mark == VISITING) {
         fprintf(stderr, "ERROR: Circular dependency detected\n");

@@ -305,8 +305,7 @@ static void* RuleConstructor(void* args) {
                 command_string[size] = '\0';
             }
 
-            Command* command = newCommandFromString(command_string);
-            if (command != NULL) ll_push(rule->commands, command);
+            ll_push(rule->commands, command_string);
         } else if (isIgnoredLine(line)) {
             ;  // ignore line
         } else {

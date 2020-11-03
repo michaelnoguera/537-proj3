@@ -20,7 +20,7 @@
  * @param command command to execute
  * @return status value of the child process
  */ 
-int execCommand(Command* command);
+int execCommand(char* command_string);
 
 /**
  * Helper method to get the modification time on a file

@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
     //execCommand(c);
     //newCommandFromString("hello world < in > out");
     //newCommandFromString("one two three four five   ");
-    
+
     execRules(ordering, map);
 
     return EXIT_SUCCESS;

@@ -58,7 +58,7 @@ Command* newCommandFromString(char* string) {
     Command* command = newCommand();  // exits cleanly on error
     const char delimiters[] = " <>\0";
     char* end = string;  // make end of each token persist through steps to be used as
-                         // start of next section
+                        // start of next section
 
     LinkedList* argv_ll = ll_initialize();
     // 1. extract arguments which follow the command name
