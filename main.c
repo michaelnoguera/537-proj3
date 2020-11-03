@@ -25,6 +25,8 @@ int main(int argc, char** argv) {
     }
     Graph* g = ParseMakefile(makefile);
     BTree* map = g->searchtree;
+    bt_print(map);
+
     LinkedList* ordering;
 
     if (argc <= 1) {

@@ -55,4 +55,6 @@ int bt_insert(BTree* tree, const char* key, const void* value);
  * as well.
  */
 const void* bt_get(const BTree* tree, const char* key);
+
+void bt_print(const BTree* bt);
 #endif

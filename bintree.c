@@ -199,6 +199,16 @@ const void* bt_get(const BTree* tree, const char* key) {
 
     return getHelper(tree->root, key);
 }
+
+void bt_print_helper(const BTNode* bn) {
+    printf("%s\n",bn->key);
+    if (bn->left != NULL) bt_print_helper(bn->left);
+    if (bn->right != NULL) bt_print_helper(bn->right);
+}
+
+void bt_print(const BTree* bt) {
+    bt_print_helper(bt->root);
+}
 /* TODO implement remove if we need it
 BTNode bt_removeHelper(BTNode p, char** key, int err) {
     // BASE CASE: fell off tree --> not found
