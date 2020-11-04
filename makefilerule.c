@@ -3,9 +3,9 @@
 #include "makefilerule.h"
 
 #include <assert.h>
-#include <string.h>
 #include <ctype.h>
 #include <stdbool.h>
+#include <string.h>
 
 Rule* newRule() {
     Rule* rule = malloc(sizeof(Rule));
@@ -41,16 +41,11 @@ Command* newCommand() {
 
 static void printSubstring(char* string, char* start, char* end, int color) {
     for (size_t i = 0; i < strlen(string); i++) {
-        if (start == string+i) printf("\x1B[30;%im", color);
+        if (start == string + i) printf("\x1B[30;%im", color);
         printf("%c", string[i]);
-        if (end == string+i) printf("\x1B[m");
+        if (end == string + i) printf("\x1B[m");
     }
     printf("\x1B[0m\n");
-}
-
-static inline int max(int a, int b) {
-    if (a >= b) return a;
-    else if (b > a) return b;
 }
 
 static const char delimiters[] = " <>\0";
@@ -60,17 +55,27 @@ static const char delimiters[] = " <>\0";
  * @param[in/out] mut char pointer to advance
  * @param[out] 1 if '<' or '>' reached
  */
-static char* advanceToStartOfToken(char* mut, bool* IOreached) {
-    assert(mut != NULL && IOreached == false);
-    while (*mut == ' ' || *mut == '\0' || *mut == '\t' || *mut == '<' || *mut == '>') {
-        if (*mut == '<' || *mut == '>') {
-            IOreached = true;
-            return;
+static char* advanceToStartOfToken(char** mut, bool* IOreached) {
+    assert(mut != NULL && *mut != NULL);
+    while (**mut != '\0' && (**mut == ' ' || **mut == '\t' || **mut == '<' || **mut == '>')) {
+        if (**mut == '<' || **mut == '>') {
+            *IOreached = true;
+            return *mut;
         }
-        return mut+1; // autoscales to char
+        *mut = *mut + 1;  // autoscales to char
     }
+    *IOreached = false;
+    return *mut;
 }
 
+/**
+ * Given a string containing a makefile command, tokenize it and construct a new
+ * Command struct with the appropriate fields
+ * 
+ * @param[in] string
+ * 
+ * @return command struct
+ */ 
 Command* newCommandFromString(char* string) {
     if (string == NULL) {
         perror("exec: <Cannot construct command from NULL string>");
@@ -82,31 +87,34 @@ Command* newCommandFromString(char* string) {
     }
 
     Command* command = newCommand();
-    char* start = string; // start of current section being parsed
-    char* end = string; // end of current section being parsed
-    
-    bool IOreached = false;
+    LinkedList* argv_ll = ll_initialize();
+
+    // Find some key points in the string (or assert their absence) in an initial pass
     char* leftarrow = strchrnul(string, '<');
     char* rightarrow = strchrnul(string, '>');
+    char* nullterminator = strrchr(string, '\0');
+    assert(nullterminator != NULL);  // string should be null terminated
 
-    LinkedList* argv_ll = ll_initialize();
     // 1. extract arguments which follow the command name
+    char* start = string;  // start of current section being parsed
+    char* end = string;    // end of current section being parsed
+    bool IOreached = false;
     {
         while (*end != '\0') {
-            // A) Find start and end of current token
-            start = advanceToStartOfToken(&start, &IOreached); // find start of arg
+            // A) find argument bounds
+            start = end;
+            advanceToStartOfToken(&start, &IOreached);  // find start of arg
             if (IOreached) break;
+            assert(start != NULL && *start != '\0');
 
-            end = start + strcspn(start, delimiters)-1;  // auto-scaled to char size
+            end = start + strcspn(start, delimiters) - 1;  // auto-scaled to char size
 
+            // B) calculate argument string length
             size_t size = end - start + 1;  // as a number of chars
-            printSubstring(string, start, end, 102);
             assert(size > 0);
 
-            printSubstring(string, start, end, 102);
-
-            // B) Copy token into place
-            char* arg = malloc(sizeof(char) * (size+1));
+            // C) copy argument into a new variable
+            char* arg = malloc(sizeof(char) * (size + 1));
             if (arg == NULL) {
                 perror("exec: <Memory allocation failed while interpreting command>");
                 exit(EXIT_FAILURE);
@@ -115,84 +123,84 @@ Command* newCommandFromString(char* string) {
             strncpy(arg, start, size);
             arg[size] = '\0';
 
-            end++;
-
+            // D) add the variable to arguments list
+            printSubstring(string, start, end, 102);
             ll_push(argv_ll, arg);
             ll_print_as_strings(argv_ll);
+
+            // E) advance pointer so that next iteration doesn't hit same token
+            end++;
         }
     }
     ll_print_as_strings(argv_ll);
     command->argv = (char**)ll_to_array(argv_ll);
 
-    command->outputfile = NULL;
-    {
-        char* start = leftarrow;
-        char* end = max(rightarrow, string+strlen(string));
-        // if there is an output redirect
-        if (start < end) {
-            printSubstring(string, start, end, 107);
-        }
-    }
+    if (IOreached) {
+        // 2. I/O redirection: CMD < INPUT
+        if (leftarrow != NULL) {
+            // A) find token bounds
+            start = leftarrow + 1;
+            printSubstring(string, start, start, 102);
 
-    command->inputfile = NULL;
-    {
-        char* start = rightarrow;
-        char* end = max(leftarrow, string+strlen(string));
-        // if there is an input redirect
-        if (start < end) {
-            printSubstring(string, start, end, 107);
+            bool noActualFileSpecified = false; // in case input is "<>" or "> <" etc.
+            advanceToStartOfToken(&start, &noActualFileSpecified);
+            if (noActualFileSpecified) {
+                perror("exec: <Invalid I/O redirection>");
+                exit(EXIT_FAILURE);
+            }
 
-            /*char* arg = malloc(sizeof(char) * (size+1));
-            if (arg == NULL) {
+            end = start + strcspn(start, delimiters) - 1;
+            printSubstring(string, end, end, 101);
+
+            // B) calculate string length
+            size_t size = end - start + 1;  // as a number of chars
+            assert(size > 0);
+
+            // C) copy string into place
+            printSubstring(string, start, end, 103);
+            command->inputfile = malloc(sizeof(char) * (size + 1));
+            if (command->inputfile == NULL) {
                 perror("exec: <Memory allocation failed while interpreting command>");
                 exit(EXIT_FAILURE);
             }
 
-            strncpy(arg, start, size);
-            arg[size] = '\0';*/
-
+            strncpy(command->inputfile, start, size);
+            command->inputfile[size] = '\0';
         }
+
+        // 3. I/O redirection: CMD > OUTPUT
+        if (rightarrow != NULL) {
+            // A) find token bounds
+            start = rightarrow + 1;
+
+            bool noActualFileSpecified = false; // in case input is "<>" or "> <" etc.
+            advanceToStartOfToken(&start, &noActualFileSpecified);
+            if (noActualFileSpecified) {
+                perror("exec: <Invalid I/O redirection>");
+                exit(EXIT_FAILURE);
+            }
+
+            end = start + strcspn(start, delimiters) - 1;
+
+            // B) calculate string length
+            size_t size = end - start + 1;  // as a number of chars
+            printSubstring(string, start, end, 102);
+            assert(size > 0);
+
+            // C) copy string into place
+            printSubstring(string, start, end, 103);
+            command->outputfile = malloc(sizeof(char) * (size + 1));
+            if (command->outputfile == NULL) {
+                perror("exec: <Memory allocation failed while interpreting command>");
+                exit(EXIT_FAILURE);
+            }
+
+            strncpy(command->outputfile, start, size);
+            command->outputfile[size] = '\0';
+        }
+        printf("IN: %s\n", command->inputfile);
+        printf("OUT: %s\n", command->outputfile);
     }
-
-    /*
-    // 2. find I/O redirect filenames
-    //if (strstr())
-    while (*end != '\0') {
-        start = end;
-        while (*start == ' ' || *start == '\0' || *start == '\t'){
-            //printSubstring(string, start, start, 101);
-            start++;
-        }
-        printf("\x1B[31m start: %c \x1B[0m\n", *start);
-        end = start + strcspn(start, delimiters);  // auto-scaled to char size
-        assert(end > start);
-
-        //printSubstring(string, start, end, 103);
-        while (*end == ' ' || *end == '\0' || *end == '\t'){
-            //printSubstring(string, end, end, 101);
-            end--;
-        }
-
-        size_t size = end - start + 1;  // as a number of chars
-        assert(size > 0);
-
-        //printSubstring(string, start, end, 102);
-
-        char* arg = malloc(sizeof(char) * (size+1));
-        if (arg == NULL) {
-            perror("Memory allocation failed while interpreting command");
-            exit(EXIT_FAILURE);
-        }
-
-        strncpy(arg, start, size);
-        arg[size] = '\0';
-
-        command->inputfile = arg;
-
-        end++;
-    }
-    // manually*/
-
     return command;
 }
 
