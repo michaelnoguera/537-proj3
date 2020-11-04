@@ -30,8 +30,13 @@ int main(int argc, char** argv) {
     LinkedList* ordering;
 
     if (argc <= 1) {
-        fprintf(stderr, "ERROR: Must specify a target after 'make'.\n");
-        exit(EXIT_FAILURE);
+        GNode* first_target = ll_get(g->nodes, 0);
+        if (first_target == NULL) {
+            fprintf(stderr, "ERROR: No targets specified in makefile.\n");
+            exit(EXIT_FAILURE);
+        } else {
+            ordering = topologicalSortFromNode(g, first_target);
+        }
     } else {
         GNode* result = (GNode*)bt_get(g->searchtree, argv[1]);
         if (result == NULL) {
