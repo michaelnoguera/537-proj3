@@ -7,6 +7,7 @@
 #include <stdbool.h>
 #include <string.h>
 
+/// Consructs a new Rule struct with default values
 Rule* newRule() {
     Rule* rule = malloc(sizeof(Rule));
     if (rule == NULL) {
@@ -23,6 +24,7 @@ Rule* newRule() {
     return rule;
 }
 
+/// Constructs a new Command struct with default values
 Command* newCommand() {
     Command* command = malloc(sizeof(Command));
     if (command == NULL) {
@@ -39,14 +41,14 @@ Command* newCommand() {
 
 //static const size_t MAX_LINE_LEN = 4096;
 
-static void printSubstring(char* string, char* start, char* end, int color) {
+/*static void printSubstring(char* string, char* start, char* end, int color) {
     for (size_t i = 0; i < strlen(string); i++) {
         if (start == string + i) printf("\x1B[30;%im", color);
         printf("%c", string[i]);
         if (end == string + i) printf("\x1B[m");
     }
     printf("\x1B[0m\n");
-}
+}*/
 
 static const char delimiters[] = " <>\0";
 
@@ -75,7 +77,7 @@ static char* advanceToStartOfToken(char** mut, bool* IOreached) {
  * @param[in] string
  * 
  * @return command struct
- */ 
+ */
 Command* newCommandFromString(char* string) {
     if (string == NULL) {
         perror("exec: <Cannot construct command from NULL string>");
@@ -124,25 +126,24 @@ Command* newCommandFromString(char* string) {
             arg[size] = '\0';
 
             // D) add the variable to arguments list
-            printSubstring(string, start, end, 102);
             ll_push(argv_ll, arg);
-            ll_print_as_strings(argv_ll);
 
             // E) advance pointer so that next iteration doesn't hit same token
             end++;
         }
     }
-    ll_print_as_strings(argv_ll);
+
+    // Convert linkedlist into array as per argv needs
     command->argv = (char**)ll_to_array(argv_ll);
+    ll_destruct(argv_ll);  // free overhead without hurting string*s used by argv
 
     if (IOreached) {
         // 2. I/O redirection: CMD < INPUT
-        if (leftarrow != NULL) {
+        if (leftarrow != nullterminator) {
             // A) find token bounds
             start = leftarrow + 1;
-            printSubstring(string, start, start, 102);
 
-            bool noActualFileSpecified = false; // in case input is "<>" or "> <" etc.
+            bool noActualFileSpecified = false;  // in case input is "<>" or "> <" etc.
             advanceToStartOfToken(&start, &noActualFileSpecified);
             if (noActualFileSpecified) {
                 perror("exec: <Invalid I/O redirection>");
@@ -150,14 +151,12 @@ Command* newCommandFromString(char* string) {
             }
 
             end = start + strcspn(start, delimiters) - 1;
-            printSubstring(string, end, end, 101);
 
             // B) calculate string length
             size_t size = end - start + 1;  // as a number of chars
             assert(size > 0);
 
             // C) copy string into place
-            printSubstring(string, start, end, 103);
             command->inputfile = malloc(sizeof(char) * (size + 1));
             if (command->inputfile == NULL) {
                 perror("exec: <Memory allocation failed while interpreting command>");
@@ -169,11 +168,11 @@ Command* newCommandFromString(char* string) {
         }
 
         // 3. I/O redirection: CMD > OUTPUT
-        if (rightarrow != NULL) {
+        if (rightarrow != nullterminator) {
             // A) find token bounds
             start = rightarrow + 1;
 
-            bool noActualFileSpecified = false; // in case input is "<>" or "> <" etc.
+            bool noActualFileSpecified = false;  // in case input is "<>" or "> <" etc.
             advanceToStartOfToken(&start, &noActualFileSpecified);
             if (noActualFileSpecified) {
                 perror("exec: <Invalid I/O redirection>");
@@ -184,11 +183,9 @@ Command* newCommandFromString(char* string) {
 
             // B) calculate string length
             size_t size = end - start + 1;  // as a number of chars
-            printSubstring(string, start, end, 102);
             assert(size > 0);
 
             // C) copy string into place
-            printSubstring(string, start, end, 103);
             command->outputfile = malloc(sizeof(char) * (size + 1));
             if (command->outputfile == NULL) {
                 perror("exec: <Memory allocation failed while interpreting command>");
@@ -198,9 +195,8 @@ Command* newCommandFromString(char* string) {
             strncpy(command->outputfile, start, size);
             command->outputfile[size] = '\0';
         }
-        printf("IN: %s\n", command->inputfile);
-        printf("OUT: %s\n", command->outputfile);
     }
+
     return command;
 }
 
