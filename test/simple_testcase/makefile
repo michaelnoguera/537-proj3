@@ -87,8 +87,8 @@ clean_prog3:
 
 clean: clean_objs clean_prog1 clean_prog2 clean_prog3
 
-input-output:
-	test<ls
-	help < ls
-	wc > file
-	printf < afile
+afile: 
+	echo "The quick brown fox jumped over the lazy dog" > afile
+
+input-output: afile
+	wc < afile > out

@@ -11,22 +11,28 @@
 //TODO: properly implement return value
 int execCommand(char* command_string) {
 
+    printf("running %s\n", command_string);
     Command* command = newCommandFromString(command_string);
     if (command == NULL) {
         fprintf(stderr, "ERROR: Could not parse command for rule");
         exit(EXIT_FAILURE);
     }
 
-    int input_fd = open(command->inputfile, O_RDONLY);
-    int output_fd = open(command->outputfile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
+    int input_fd, output_fd = -1;
 
-    if (input_fd == -1) {
-        fprintf(stderr, "Error calling open() on infile");
-        exit(EXIT_FAILURE);
+    if (command->inputfile != NULL) {
+        input_fd = open(command->inputfile, O_RDONLY);
+        if (input_fd == -1) {
+            fprintf(stderr, "Error calling open() on infile");
+            exit(EXIT_FAILURE);
+        }
     }
-    if (output_fd == -1) {
-        fprintf(stderr, "Error calling open() for writing to outfile");
-        exit(EXIT_FAILURE);
+    if (command->outputfile != NULL) {
+        output_fd = open(command->outputfile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
+        if (output_fd == -1) {
+            fprintf(stderr, "Error calling open() for writing to outfile");
+            exit(EXIT_FAILURE);
+        }
     }
     
     pid_t child_pid;
@@ -41,11 +47,11 @@ int execCommand(char* command_string) {
         // use execvp() to start new command
 
         // Copy over file descriptors to redirect output
-
-        dup2(input_fd, 0); // 0 represents stdin
-        dup2(output_fd, 1); // 1 represents stdout
-
         printf("command: %s\n", *command->argv);
+
+        if (input_fd != -1) dup2(input_fd, 0); // 0 represents stdin
+        if (output_fd != -1) dup2(output_fd, 1); // 1 represents stdout
+
         if (execvp(*command->argv, command->argv) < 0) {  // execute the command
                perror("Error calling exec");
                exit(1);
