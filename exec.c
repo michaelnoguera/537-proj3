@@ -16,6 +16,18 @@ int execCommand(char* command_string) {
         fprintf(stderr, "ERROR: Could not parse command for rule");
         exit(EXIT_FAILURE);
     }
+
+    int input_fd = open(command->inputfile, O_RDONLY);
+    int output_fd = open(command->outputfile, O_WRONLY | O_TRUNC | O_CREAT, S_IRUSR | S_IWUSR);
+
+    if (input_fd == -1) {
+        fprintf(stderr, "Error calling open() on infile");
+        exit(EXIT_FAILURE);
+    }
+    if (output_fd == -1) {
+        fprintf(stderr, "Error calling open() for writing to outfile");
+        exit(EXIT_FAILURE);
+    }
     
     pid_t child_pid;
     int status;
@@ -27,6 +39,12 @@ int execCommand(char* command_string) {
     } else if(child_pid == 0) {
         // CHILD PROCESS
         // use execvp() to start new command
+
+        // Copy over file descriptors to redirect output
+
+        dup2(input_fd, 0); // 0 represents stdin
+        dup2(output_fd, 1); // 1 represents stdout
+
         printf("command: %s\n", *command->argv);
         if (execvp(*command->argv, command->argv) < 0) {  // execute the command
                perror("Error calling exec");
@@ -105,8 +123,8 @@ void execRule(BTree* map, Rule* rule) {
         LinkedListNode* curr_command = (rule->commands)->head;
         for (int i = 0; i < rule->commands->size; i++) {
             if (execCommand(curr_command->value) != 0) {
-                fprintf(stderr, "ERROR: Command failed, stopping. \n");
-                exit(EXIT_FAILURE);
+            //    fprintf(stderr, "ERROR: Command failed, stopping. \n");
+            //    exit(EXIT_FAILURE);
             }
             curr_command = curr_command->next;
         }

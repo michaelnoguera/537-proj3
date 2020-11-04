@@ -14,7 +14,7 @@
 #include "makefilerule.h"
 
 int main(int argc, char** argv) {
-    FILE* makefile;
+    /*FILE* makefile;
     makefile=fopen("makefile", "r");
     if (makefile==NULL) { 
         makefile = fopen("Makefile", "r");
@@ -45,7 +45,7 @@ int main(int argc, char** argv) {
         } else {
             ordering = topologicalSortFromNode(g, result);
         }
-    }
+    }*/
 
     //newCommandFromString("one two three four five");
     //Command* c = newCommandFromString("ls -l -a -h");
@@ -53,7 +53,8 @@ int main(int argc, char** argv) {
     //newCommandFromString("hello world < in > out");
     //newCommandFromString("one two three four five   ");
 
-    execRules(ordering, map);
+    //execRules(ordering, map);
+    execCommand("wc > out < in");
 
     return EXIT_SUCCESS;
 }

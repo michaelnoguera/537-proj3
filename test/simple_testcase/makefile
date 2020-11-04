@@ -86,3 +86,9 @@ clean_prog3:
 	rm prog3
 
 clean: clean_objs clean_prog1 clean_prog2 clean_prog3
+
+input-output:
+	test<ls
+	help < ls
+	wc > file
+	printf < afile

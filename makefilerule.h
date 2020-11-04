@@ -15,6 +15,8 @@
 #include "linkedlist.h"
 #include "time.h"
 
+enum pipestatus {UNREAD, READING, READ}; // status of reading i/o redirect args
+
 typedef struct makefile_rule_t {
     char* target;
     char** dependencies;
