@@ -1,11 +1,18 @@
 /**
- * CS 537 Programming Assignment 2 (Fall 2020)
+ * CS 537 Programming Assignment 3 (Fall 2020)
  * @author Michael Noguera (noguera) <mnoguera(at)wisc.edu>
  * @author Julien de Castelnau (de-castelnau) <decastelnau(at)wisc.edu>
  * @date 10/13/2020
- * @brief Thread-safe queue implementation from proj2 with statistics 
- * functions removed.
+ *
  * @file queue.c
+ * @brief Thread-safe queue implementation that holds void pointers
+ * @version 2.0
+ *
+ * @details This is our queue module from project 2, altered as follows:
+ *  - values are now void pointers, to let this work as a quasi-generic type
+ *  - the statistics module has been fully removed
+ *  - A peek function was added, so that threads could act preemptively based on
+ *    the next value they are going to recieve without committing to storing it.
  */
 
 #include "queue.h"
@@ -17,6 +24,12 @@
 #include <stdlib.h>
 #include <string.h>
 
+/**
+ * Initializes a new empty Queue.
+ *
+ * @param size queue capacity
+ * @return pointer to new heap-allocated Queue
+ */
 Queue* q_initialize(const size_t size) {
     assert(size > 0);
     // Malloc the queue structure
@@ -27,9 +40,7 @@ Queue* q_initialize(const size_t size) {
     }
 
     // Setup queue spots and internal fields
-    for (size_t i = 0; i < size; i++) {
-        q->item[i] = NULL;
-    }
+    for (size_t i = 0; i < size; i++) { q->item[i] = NULL; }
 
     q->head = 0;
     q->tail = 0;
@@ -54,6 +65,12 @@ Queue* q_initialize(const size_t size) {
     return q;
 }
 
+/**
+ * Adds a new Node to the end of a Queue.
+ *
+ * @param q The queue to enqueue to.
+ * @param value The value of the new node, of type void*.
+ */
 void q_enqueue(Queue* q, void* value) {
     if (q == NULL) {
         perror("Can't enqueue an item to NULL.");
@@ -77,6 +94,12 @@ void q_enqueue(Queue* q, void* value) {
     pthread_mutex_unlock(&q->lock);
 }
 
+/**
+ * Removes a node from the end of a queue
+ *
+ * @param q The queue from which to dequeue from
+ * @return the pointer that was removed, which can point to NULL
+ */
 void* q_dequeue(Queue* q) {
     if (q == NULL) {
         perror("Can't dequeue an item from NULL.");
@@ -88,9 +111,9 @@ void* q_dequeue(Queue* q) {
     // WAIT UNTIL VALUE IF NECESSARY
     while (q->tail == q->head) pthread_cond_wait(&q->empty, &q->lock);
 
-    char* value = q->item[q->tail];    // retrieve from queue
-    q->item[q->tail] = NULL;            // null out old ptr
-    q->tail = (q->tail + 1) % q->size;  // advance tail ptr
+    char* value      = q->item[q->tail];        // retrieve from queue
+    q->item[q->tail] = NULL;                    // null out old ptr
+    q->tail          = (q->tail + 1) % q->size; // advance tail ptr
 
     pthread_cond_signal(&q->full);
     pthread_mutex_unlock(&q->lock);
@@ -98,6 +121,13 @@ void* q_dequeue(Queue* q) {
     return value;
 }
 
+/**
+ * Peek at next node to be dequeued
+ *
+ * @param q the queue, which will not be altered
+ * @return the next value that would be returned by dequeue, without actually
+ * removing it from the queue
+ */
 void* q_peek(Queue* q) {
     if (q == NULL) {
         perror("NULL is not a valid queue.");
@@ -109,7 +139,7 @@ void* q_peek(Queue* q) {
     // WAIT UNTIL VALUE IF NECESSARY
     while (q->tail == q->head) pthread_cond_wait(&q->empty, &q->lock);
 
-    char* value = q->item[q->tail];    // next in line
+    char* value = q->item[q->tail]; // next in line
 
     pthread_mutex_unlock(&q->lock);
 
