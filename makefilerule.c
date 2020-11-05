@@ -1,3 +1,13 @@
+/**
+ * CS 537 Programming Assignment 3 (Fall 2020)
+ * @author Michael Noguera (noguera) <mnoguera(at)wisc.edu>
+ * @author Julien de Castelnau (de-castelnau) <decastelnau(at)wisc.edu>
+ * @date 11/4/2020
+ * @brief Extracts relevant information from a makefile rule representing a
+ *   single target, to facilitate running commands with arguments and I/O
+ * @file makefilerule.c
+ */
+
 #define _GNU_SOURCE
 
 #include "makefilerule.h"
@@ -41,6 +51,8 @@ Command* newCommand() {
 
 // static const size_t MAX_LINE_LEN = 4096;
 
+// Debugging helper function, uses ANSI terminal codes to highlight substring
+// that falls between pointers
 /*static void printSubstring(char* string, char* start, char* end, int color) {
     for (size_t i = 0; i < strlen(string); i++) {
         if (start == string + i) printf("\x1B[30;%im", color);
@@ -50,7 +62,7 @@ Command* newCommand() {
     printf("\x1B[0m\n");
 }*/
 
-static const char delimiters[] = " <>\0";
+static const char delimiters[] = " \t<>\0";
 
 /**
  * Advances a char* to the next token for input
