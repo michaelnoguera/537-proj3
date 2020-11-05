@@ -11,7 +11,7 @@
 //TODO: properly implement return value
 int execCommand(char* command_string) {
 
-    printf("running %s\n", command_string);
+    printf("\x1B[37mrunning %s\x1B[0m\n", command_string);
     Command* command = newCommandFromString(command_string);
     if (command == NULL) {
         fprintf(stderr, "ERROR: Could not parse command for rule");
@@ -37,31 +37,30 @@ int execCommand(char* command_string) {
     }
     
     pid_t child_pid;
-    int status;
+    int status = 1; // default to no error
+
     child_pid = fork();
     if(child_pid < 0) {
         // there was an error calling fork
         perror("Error calling fork()");
         exit(EXIT_FAILURE);
     } else if(child_pid == 0) {
-        // CHILD PROCESS
-        // use execvp() to start new command
-
+        // === CHILD PROCESS ===
         // Copy over file descriptors to redirect output
-        printf("command: %s\n", *command->argv);
-
         if (input_fd != -1) dup2(input_fd, 0); // 0 represents stdin
         if (output_fd != -1) dup2(output_fd, 1); // 1 represents stdout
 
+        // use execvp() to start new command
         if (execvp(*command->argv, command->argv) < 0) {  // execute the command
                perror("Error calling exec");
-               exit(1);
+               exit(EXIT_FAILURE);
         }
+
+        // run to completion
     } else {
-        // PARENT PROCESS
+        // === PARENT PROCESS ===
         // wait for child process to finish
-        while (wait(&status) != child_pid)     // wait for completion
-            ;
+        while (wait(&status) != child_pid);    // wait for completion
     }
     return status;
 }
@@ -98,7 +97,7 @@ static Rule* getRuleFromKey(BTree* map, char* key) {
 
 void execRule(BTree* map, Rule* rule) {
     // guaranteed dependencies are already complete
-    printf("\x1B[32m executing %s\x1B[0m\n", rule->target);
+    //printf("\x1B[32mexecuting target %s\x1B[0m\n", rule->target);
 
     bool outOfDate = false;
 
@@ -117,7 +116,7 @@ void execRule(BTree* map, Rule* rule) {
             Rule* result = getRuleFromKey(map, depname);
             // Not found? Then it cannot be satisfied
             if (result == NULL) {
-                fprintf(stderr, "ERROR: No rule to make target '%s'\n", depname);
+                fprintf(stderr, "\x1B[91mERROR: No rule to make target '%s'\x1B[0m\n", depname);
                 exit(EXIT_FAILURE);
             }
             // If it was found, its timestamp is represented by 0, which is already its value.
@@ -127,11 +126,13 @@ void execRule(BTree* map, Rule* rule) {
     }
 
     if (outOfDate) {
+        // then run command
+        // get from linked list, unwrap, and call
         LinkedListNode* curr_command = (rule->commands)->head;
         for (int i = 0; i < rule->commands->size; i++) {
             if (execCommand(curr_command->value) != 0) {
-            //    fprintf(stderr, "ERROR: Command failed, stopping. \n");
-            //    exit(EXIT_FAILURE);
+                fprintf(stderr, "\x1B[91mERROR: Command exited with non-zero return value, stopping.\x1B[0m\n");
+                exit(EXIT_FAILURE);
             }
             curr_command = curr_command->next;
         }

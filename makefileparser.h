@@ -3,8 +3,8 @@
  * @author Michael Noguera (noguera) <mnoguera(at)wisc.edu>
  * @author Julien de Castelnau (de-castelnau) <decastelnau(at)wisc.edu>
  * @date 11/4/2020
- * @file makefileparser.h
  * @brief Multithreaded makefile parsing module that follows assignment rules
+ * @file makefileparser.h
  */
 
 

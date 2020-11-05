@@ -1,6 +1,6 @@
 /**
  * CS 537 Programming Assignment 3 (Fall 2020)
- * @author Michael Noguera
+ * @author Michael Noguera (noguera) <mnoguera(at)wisc.edu>
  * @date 11/4/2020
  * @brief Parses a makefile according to the assignment rules and constructs
  * MakefileRule representations for each target
@@ -187,9 +187,9 @@ static inline bool isCommandLine(const char* line) {
 /// Returns true if the given line can be ignored, or false otherwise.
 static inline bool isIgnoredLine(const char* line) {
     assert(line != NULL);
-    size_t first_non_whitespace_char = strspn(line, "\t ");
+    size_t first_non_whitespace_char = strspn(line, "\t \0");
 
-    if (first_non_whitespace_char == strnlen(line, MAX_LINE_LEN)) return true;
+    if (first_non_whitespace_char == strlen(line)) return true;
     if (line[first_non_whitespace_char] == '#') return true;
 
     return false;
@@ -224,8 +224,7 @@ static void* RuleConstructor(void* args) {
 
             // 2. Get the target name, and make a copy to use in the Rule.
             char* target; // name of target that will be built by this Rule
-            char*
-              colon; // location of ':' delimiter denoting end of target name
+            char* colon;  // location of ':' delimiter denoting end of name
             {
                 colon = strchr(line, ':');
                 size_t targetsize = colon - line; // as a number of chars
@@ -321,7 +320,8 @@ static void* RuleConstructor(void* args) {
         } else {
             exitwitherr(
               linenum,
-              "line is invalid-not a target, command, comment, or blank", line);
+              "line is invalid-not a valid target, command, comment, or blank",
+              line);
         }
 
         free(line);

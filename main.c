@@ -45,7 +45,10 @@ int main(int argc, char** argv) {
                 filename = optarg;
                 break;
             case '?':
-                fprintf(stderr, "ERROR: error parsing command line args");
+                fprintf(stderr, "ERROR: error parsing command line args\n");
+                fprintf(stderr, "Valid usages are:\n");
+                fprintf(stderr, "\t./537make\n");
+                fprintf(stderr, "\t./537make -f MAKEFILE\n");
                 exit(EXIT_FAILURE);
                 break;
             default:
