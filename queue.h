@@ -74,4 +74,11 @@ void* q_dequeue(Queue* q);
  */
 void* q_peek(Queue* q);
 
+/**
+ * Frees a Queue struct and all values presently in it. Only call this method
+ * when you are sure the queue will not be used again.
+ *
+ * @param ptr to Queue struct that should be freed.
+ */
+void q_free(Queue* ptr);
 #endif
