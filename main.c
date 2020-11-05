@@ -6,39 +6,49 @@
  * @file main.c
  */
 
+#include <getopt.h>
 #include <stdio.h>
 #include <string.h>
-#include <getopt.h>
 
-#include "graph.h"
 #include "exec.h"
+#include "graph.h"
 #include "makefileparser.h"
 #include "makefilerule.h"
 
+/**
+ * Opens the requested makefile, or defaults to "makefile" (then "Makefile"),
+ * while handling errors.
+ *
+ * @param filename makefile
+ *
+ * @return FILE* to the makefile, in read mode
+ */
 FILE* openMakefile(char* filename) {
     FILE* makefile;
     if (filename != NULL) {
         makefile = fopen(filename, "r");
         if (makefile != NULL) return makefile;
-        fprintf(stderr,"ERROR: Invalid makefile specified.\n");
+        fprintf(stderr, "ERROR: Invalid makefile specified.\n");
         exit(EXIT_FAILURE);
     } else {
-        makefile=fopen("makefile", "r");
+        makefile = fopen("makefile", "r");
         if (makefile != NULL) return makefile;
         makefile = fopen("Makefile", "r");
         if (makefile != NULL) return makefile;
-        fprintf(stderr,"ERROR: No makefile found and it was not \
+        fprintf(stderr,
+                "ERROR: No makefile found and it was not \
                         specified on the command line.\n");
         exit(EXIT_FAILURE);
-        
     }
 }
 
+// Main function, gets input and coordinates program execution.
 int main(int argc, char** argv) {
     int opt = 0;
     char* filename = NULL;
     char* targetname = NULL;
 
+    // 0. User can specify makefile using -f flag (extra credit)
     while ((opt = getopt(argc, argv, "-f:")) != -1) {
         switch ((char)opt) {
             case 'f':
@@ -48,7 +58,12 @@ int main(int argc, char** argv) {
                 fprintf(stderr, "ERROR: error parsing command line args\n");
                 fprintf(stderr, "Valid usages are:\n");
                 fprintf(stderr, "\t./537make\n");
+                fprintf(stderr, "\t./537make TARGET\n");
                 fprintf(stderr, "\t./537make -f MAKEFILE\n");
+                fprintf(stderr, "\t./537make -f MAKEFILE TARGET\n");
+                fprintf(
+                  stderr,
+                  "If more than one target is specified, the last is used.\n");
                 exit(EXIT_FAILURE);
                 break;
             default:
@@ -57,12 +72,14 @@ int main(int argc, char** argv) {
         }
     }
 
+    // 1. Get the makefile
     FILE* makefile = openMakefile(filename);
 
+    // 2. Parse the makefile and construct a binary tree map
     Graph* g = ParseMakefile(makefile);
     BTree* map = g->searchtree;
-    bt_print(map);
 
+    // 3. Topological ordering and some validation
     LinkedList* ordering;
 
     if (targetname == NULL) {
@@ -83,6 +100,7 @@ int main(int argc, char** argv) {
         }
     }
 
+    // 4. Run the rules in order
     execRules(ordering, map);
 
     return EXIT_SUCCESS;
