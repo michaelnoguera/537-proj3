@@ -11,7 +11,7 @@
 //TODO: properly implement return value
 int execCommand(char* command_string) {
 
-    printf("\x1B[37mrunning %s\x1B[0m\n", command_string);
+    printf("\x1B[90mrunning \"%s\"\x1B[0m\n", command_string);
     Command* command = newCommandFromString(command_string);
     if (command == NULL) {
         fprintf(stderr, "ERROR: Could not parse command for rule");
@@ -60,7 +60,7 @@ int execCommand(char* command_string) {
     } else {
         // === PARENT PROCESS ===
         // wait for child process to finish
-        while (wait(&status) != child_pid);    // wait for completion
+        wait(&status);   // wait for completion
     }
     return status;
 }

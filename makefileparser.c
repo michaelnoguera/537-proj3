@@ -260,7 +260,7 @@ static void* RuleConstructor(void* args) {
 
                     // use a copy of the string so deps can be individually
                     // freed
-                    char* cpy = malloc(sizeof(char) * (strlen(dep)));
+                    char* cpy = malloc(sizeof(char) * (strlen(dep)+1));
                     if (cpy == NULL) {
                         exitwitherr(linenum,
                                     "Error allocating memory for target name\n",
@@ -268,6 +268,8 @@ static void* RuleConstructor(void* args) {
                     }
 
                     strcpy(cpy, dep);
+                    cpy[strlen(dep)] = '\0';
+
                     ll_push(dep_ll, cpy);
                 }
 
@@ -283,8 +285,10 @@ static void* RuleConstructor(void* args) {
             rule->dependencies = dependencies;
             // rule->commands was initialized by rule constructor, and will be
             // populated by CASE 2
-            // CASE 2: LINE IS A COMMAND FOR THE CURRENT TARGET
+
+            
         } else if (isCommandLine(line)) {
+            // CASE 2: LINE IS A COMMAND FOR THE CURRENT TARGET
             if (rule == NULL)
                 exitwitherr(linenum, "no target to add command to", line);
 
@@ -306,7 +310,7 @@ static void* RuleConstructor(void* args) {
                     exitwitherr(linenum, "command must have positive length",
                                 line);
 
-                command_string = malloc(sizeof(char) * (size));
+                command_string = malloc(sizeof(char) * (size+1));
                 if (command_string == NULL)
                     exitwitherr(linenum, "mem alloc failed", line);
 
@@ -327,6 +331,7 @@ static void* RuleConstructor(void* args) {
         free(line);
         line = NULL;
     }
+    printMakefileRule(rule);
 
     // enqueue null sentinel value
     if (rule != NULL) q_enqueue(out, rule);
