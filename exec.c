@@ -18,7 +18,8 @@ int execCommand(char* command_string) {
         exit(EXIT_FAILURE);
     }
 
-    int input_fd, output_fd = -1;
+    int input_fd = -1;
+    int output_fd = -1;
 
     if (command->inputfile != NULL) {
         input_fd = open(command->inputfile, O_RDONLY);

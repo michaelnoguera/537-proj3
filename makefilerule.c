@@ -91,6 +91,9 @@ Command* newCommandFromString(char* string) {
     Command* command = newCommand();
     LinkedList* argv_ll = ll_initialize();
 
+    command->inputfile = NULL;
+    command->outputfile = NULL;
+
     // Find some key points in the string (or assert their absence) in an initial pass
     char* leftarrow = strchrnul(string, '<');
     char* rightarrow = strchrnul(string, '>');

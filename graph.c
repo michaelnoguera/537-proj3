@@ -76,8 +76,6 @@ void visit(BTree* searchTree, LinkedList* l, GNode* n) {
     assert(l != NULL);
     assert(n != NULL);
 
-    //printf("Visiting target: %s\n", n->contents->target);
-
     if (n->mark == VISITED) return;
     if (n->mark == VISITING) {
         fprintf(stderr, "ERROR: Circular dependency detected\n");
@@ -91,7 +89,6 @@ void visit(BTree* searchTree, LinkedList* l, GNode* n) {
         // Some elements of successors will map to NULL, this corresponds to
         // spots where the dependencies are assumed to be file targets
         // (i.e. not declared in the actual makefile.)
-        //printf("(From %s) successor: %s\n", n->contents->target, successors[i]);
         GNode* search_result = (GNode*)bt_get(searchTree, successors[i]);
 
         if (search_result != NULL) {
@@ -101,7 +98,6 @@ void visit(BTree* searchTree, LinkedList* l, GNode* n) {
 
     n->mark = VISITED;
     ll_push(l, n->contents);
-    //printf("(%s) we done\n", n->contents->target);
 }
 
 LinkedList* topologicalSortFromNode(Graph* g, GNode* root) {
