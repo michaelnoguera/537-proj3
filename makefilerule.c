@@ -39,7 +39,7 @@ Command* newCommand() {
     return command;
 }
 
-//static const size_t MAX_LINE_LEN = 4096;
+// static const size_t MAX_LINE_LEN = 4096;
 
 /*static void printSubstring(char* string, char* start, char* end, int color) {
     for (size_t i = 0; i < strlen(string); i++) {
@@ -55,17 +55,21 @@ static const char delimiters[] = " <>\0";
 /**
  * Advances a char* to the next token for input
  * @param[in/out] mut char pointer to advance
- * @param[out] 1 if '<' or '>' reached
+ * @param[out] IOreached 1 if '<' or '>' reached
+ * @param[out] endreached 1 if '\0' at end of string reached
  */
-static char* advanceToStartOfToken(char** mut, bool* IOreached) {
+static char* advanceToStartOfToken(char** mut, bool* IOreached,
+                                   bool* endreached) {
     assert(mut != NULL && *mut != NULL);
-    while (**mut != '\0' && (**mut == ' ' || **mut == '\t' || **mut == '<' || **mut == '>')) {
+    while (**mut != '\0'
+           && (**mut == ' ' || **mut == '\t' || **mut == '<' || **mut == '>')) {
         if (**mut == '<' || **mut == '>') {
             *IOreached = true;
             return *mut;
         }
-        *mut = *mut + 1;  // autoscales to char
+        *mut = *mut + 1; // autoscales to char
     }
+    if (**mut == '\0') { *endreached = true; }
     *IOreached = false;
     return *mut;
 }
@@ -73,9 +77,9 @@ static char* advanceToStartOfToken(char** mut, bool* IOreached) {
 /**
  * Given a string containing a makefile command, tokenize it and construct a new
  * Command struct with the appropriate fields
- * 
+ *
  * @param[in] string
- * 
+ *
  * @return command struct
  */
 Command* newCommandFromString(char* string) {
@@ -84,7 +88,9 @@ Command* newCommandFromString(char* string) {
         exit(EXIT_FAILURE);
     }
     if (strspn(string, " \t") == strlen(string)) {
-        perror("exec: <Empty string not a valid command, probably an issue in MakefileParser>");
+        perror(
+          "exec: <Empty string not a valid command, probably an issue in "
+          "MakefileParser>");
         exit(EXIT_FAILURE);
     }
 
@@ -94,34 +100,39 @@ Command* newCommandFromString(char* string) {
     command->inputfile = NULL;
     command->outputfile = NULL;
 
-    // Find some key points in the string (or assert their absence) in an initial pass
+    // Find some key points in the string (or assert their absence) in an
+    // initial pass
     char* leftarrow = strchrnul(string, '<');
     char* rightarrow = strchrnul(string, '>');
     char* nullterminator = strrchr(string, '\0');
-    assert(nullterminator != NULL);  // string should be null terminated
+    assert(nullterminator != NULL); // string should be null terminated
 
     // 1. extract arguments which follow the command name
-    char* start = string;  // start of current section being parsed
-    char* end = string;    // end of current section being parsed
+    char* start = string; // start of current section being parsed
+    char* end = string;   // end of current section being parsed
     bool IOreached = false;
+    bool endreached = false;
     {
-        while (*end != '\0') {
+        while (*end != '\0' && endreached == false) {
             // A) find argument bounds
-            start = end;
-            advanceToStartOfToken(&start, &IOreached);  // find start of arg
+            start = end; // find start of arg
+            advanceToStartOfToken(&start, &IOreached, &endreached);
             if (IOreached) break;
+            if (endreached) break; // *start == '\0', so stop
             assert(start != NULL && *start != '\0');
 
-            end = start + strcspn(start, delimiters) - 1;  // auto-scaled to char size
+            end = start + strcspn(start, delimiters) - 1;
 
             // B) calculate argument string length
-            size_t size = end - start + 1;  // as a number of chars
+            size_t size = end - start + 1; // as a number of chars
             assert(size > 0);
 
             // C) copy argument into a new variable
             char* arg = malloc(sizeof(char) * (size + 1));
             if (arg == NULL) {
-                perror("exec: <Memory allocation failed while interpreting command>");
+                perror(
+                  "exec: <Memory allocation failed while interpreting "
+                  "command>");
                 exit(EXIT_FAILURE);
             }
 
@@ -138,7 +149,7 @@ Command* newCommandFromString(char* string) {
 
     // Convert linkedlist into array as per argv needs
     command->argv = (char**)ll_to_array(argv_ll);
-    ll_destruct(argv_ll);  // free overhead without hurting string*s used by argv
+    ll_destruct(argv_ll); // free overhead without hurting string*s used by argv
 
     if (IOreached) {
         // 2. I/O redirection: CMD < INPUT
@@ -146,9 +157,11 @@ Command* newCommandFromString(char* string) {
             // A) find token bounds
             start = leftarrow + 1;
 
-            bool noActualFileSpecified = false;  // in case input is "<>" or "> <" etc.
-            advanceToStartOfToken(&start, &noActualFileSpecified);
-            if (noActualFileSpecified) {
+            // in case input is "<>" or "> <" etc.
+            bool noActualFileSpecified = false;
+
+            advanceToStartOfToken(&start, &noActualFileSpecified, &endreached);
+            if (noActualFileSpecified || endreached) {
                 perror("exec: <Invalid I/O redirection>");
                 exit(EXIT_FAILURE);
             }
@@ -156,13 +169,15 @@ Command* newCommandFromString(char* string) {
             end = start + strcspn(start, delimiters) - 1;
 
             // B) calculate string length
-            size_t size = end - start + 1;  // as a number of chars
+            size_t size = end - start + 1; // as a number of chars
             assert(size > 0);
 
             // C) copy string into place
             command->inputfile = malloc(sizeof(char) * (size + 1));
             if (command->inputfile == NULL) {
-                perror("exec: <Memory allocation failed while interpreting command>");
+                perror(
+                  "exec: <Memory allocation failed while interpreting "
+                  "command>");
                 exit(EXIT_FAILURE);
             }
 
@@ -175,9 +190,11 @@ Command* newCommandFromString(char* string) {
             // A) find token bounds
             start = rightarrow + 1;
 
-            bool noActualFileSpecified = false;  // in case input is "<>" or "> <" etc.
-            advanceToStartOfToken(&start, &noActualFileSpecified);
-            if (noActualFileSpecified) {
+            // in case input is "<>" or "> <" etc.
+            bool noActualFileSpecified = false;
+
+            advanceToStartOfToken(&start, &noActualFileSpecified, &endreached);
+            if (noActualFileSpecified || endreached) {
                 perror("exec: <Invalid I/O redirection>");
                 exit(EXIT_FAILURE);
             }
@@ -185,13 +202,15 @@ Command* newCommandFromString(char* string) {
             end = start + strcspn(start, delimiters) - 1;
 
             // B) calculate string length
-            size_t size = end - start + 1;  // as a number of chars
+            size_t size = end - start + 1; // as a number of chars
             assert(size > 0);
 
             // C) copy string into place
             command->outputfile = malloc(sizeof(char) * (size + 1));
             if (command->outputfile == NULL) {
-                perror("exec: <Memory allocation failed while interpreting command>");
+                perror(
+                  "exec: <Memory allocation failed while interpreting "
+                  "command>");
                 exit(EXIT_FAILURE);
             }
 
@@ -213,7 +232,8 @@ inline void printMakefileRule(Rule* r) {
         const int NODES_ON_LINE = 5;
         for (int i = 0; i < r->numdeps; i++) {
             if (i == 0 || i % NODES_ON_LINE == 0) printf("\n\t");
-            printf("\x1B[33m%i.\x1B[0m\"\x1B[1m%s\x1B[0m\"\x1B[2m, \x1B[0m", i, r->dependencies[i]);
+            printf("\x1B[33m%i.\x1B[0m\"\x1B[1m%s\x1B[0m\"\x1B[2m, \x1B[0m", i,
+                   r->dependencies[i]);
         }
         printf("\n");
     }
