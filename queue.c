@@ -134,9 +134,9 @@ void* q_dequeue(Queue* q) {
     }
 
 
-    char* value      = q->item[q->tail];        // retrieve from queue
-    q->item[q->tail] = NULL;                    // null out old ptr
-    q->tail          = (q->tail + 1) % q->size; // advance tail ptr
+    char* value = q->item[q->tail];    // retrieve from queue
+    q->item[q->tail] = NULL;           // null out old ptr
+    q->tail = (q->tail + 1) % q->size; // advance tail ptr
 
     if (pthread_cond_signal(&q->full) != 0) {
         perror("Error signalling on Queue full condition variable.\n");

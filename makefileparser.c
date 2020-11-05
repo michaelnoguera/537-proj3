@@ -105,7 +105,7 @@ static char* readerReadLine(FILE* fp, bool* overflow, bool* nullchar,
     // OVERFLOW: line length exceeds BUFSIZE
     // -> set overflow flag
     // -> consume the remainder of the oversized line
-    *overflow             = true;
+    *overflow = true;
     buf[MAX_LINE_LEN - 1] = '\0';
 
     while (c != '\n' && c != EOF) { c = getc(fp); }
@@ -123,19 +123,19 @@ static char* readerReadLine(FILE* fp, bool* overflow, bool* nullchar,
  * @details does not close fp
  */
 static void* Reader(void* args) {
-    FILE* fp           = ((FILE**)args)[0];
+    FILE* fp = ((FILE**)args)[0];
     Queue* outputQueue = ((Queue**)args)[1];
     assert(fp != NULL && outputQueue != NULL);
 
-    int linenum    = 0;
-    bool overflow  = false;
-    bool nullchar  = false;
+    int linenum = 0;
+    bool overflow = false;
+    bool nullchar = false;
     bool endOfFile = false;
 
     while (!endOfFile) {
         linenum++;
-        overflow     = false;
-        nullchar     = false;
+        overflow = false;
+        nullchar = false;
         char* string = readerReadLine(fp, &overflow, &nullchar, &endOfFile);
 
         if (endOfFile) break;
@@ -145,8 +145,8 @@ static void* Reader(void* args) {
         if (nullchar) exitwitherr(linenum, "illegal null char in line", string);
 
         struct line* wrapper = malloc(sizeof(struct line));
-        wrapper->linenum     = linenum;
-        wrapper->string      = string;
+        wrapper->linenum = linenum;
+        wrapper->string = string;
         q_enqueue(outputQueue, wrapper);
     }
 
@@ -204,7 +204,7 @@ static inline bool isIgnoredLine(const char* line) {
  * @return void* for thread closure
  */
 static void* RuleConstructor(void* args) {
-    Queue* in  = ((Queue**)args)[0];
+    Queue* in = ((Queue**)args)[0];
     Queue* out = ((Queue**)args)[1];
     assert(in != NULL && out != NULL);
 
@@ -212,7 +212,7 @@ static void* RuleConstructor(void* args) {
     struct line* wrapped;
     while ((wrapped = q_dequeue(in)) != NULL) {
         // UNWRAP LINE
-        char* line  = wrapped->string;
+        char* line = wrapped->string;
         int linenum = wrapped->linenum;
 
         // CASE 1: LINE STARTS A NEW TARGET
@@ -227,7 +227,7 @@ static void* RuleConstructor(void* args) {
             char*
               colon; // location of ':' delimiter denoting end of target name
             {
-                colon             = strchr(line, ':');
+                colon = strchr(line, ':');
                 size_t targetsize = colon - line; // as a number of chars
 
                 while (isblank(line[targetsize - 1])) targetsize--;
@@ -251,7 +251,7 @@ static void* RuleConstructor(void* args) {
                 LinkedList* dep_ll = ll_initialize();
 
                 const char dep_delimiters[] = "\t ";
-                char* saveptr               = NULL;
+                char* saveptr = NULL;
 
                 // this loop is destructive to the line of input (b/c strtok)
                 char* dep = strtok_r(colon + 1, dep_delimiters, &saveptr);
@@ -272,15 +272,15 @@ static void* RuleConstructor(void* args) {
                     ll_push(dep_ll, cpy);
                 }
 
-                numdeps      = dep_ll->size;
+                numdeps = dep_ll->size;
                 dependencies = (char**)ll_to_array(dep_ll);
                 ll_destruct(dep_ll); // free overhead while leaving pointees
             }
 
             // 4. All needed information found, construct Rule for this target
-            rule->target       = target;
-            rule->linenumber   = linenum;
-            rule->numdeps      = numdeps;
+            rule->target = target;
+            rule->linenumber = linenum;
+            rule->numdeps = numdeps;
             rule->dependencies = dependencies;
             // rule->commands was initialized by rule constructor, and will be
             // populated by CASE 2
@@ -325,6 +325,7 @@ static void* RuleConstructor(void* args) {
         }
 
         free(line);
+        line = NULL;
     }
 
     // enqueue null sentinel value
@@ -342,7 +343,7 @@ static void* RuleConstructor(void* args) {
  * @return void* for thread closure
  */
 static void* Grapher(void* args) {
-    Queue* in    = ((Queue**)args)[0];
+    Queue* in = ((Queue**)args)[0];
     Graph* graph = ((Graph**)args)[1];
     assert(in != NULL && graph != NULL);
 
@@ -376,8 +377,8 @@ Graph* ParseMakefile(FILE* makefile) {
 
     Graph* graph = initGraph();
 
-    const int QUEUE_SIZE            = 25;
-    Queue* readerToRuleConstructor  = q_initialize(QUEUE_SIZE);
+    const int QUEUE_SIZE = 25;
+    Queue* readerToRuleConstructor = q_initialize(QUEUE_SIZE);
     Queue* ruleConstructorToGrapher = q_initialize(QUEUE_SIZE);
 
     // Spawn child threads

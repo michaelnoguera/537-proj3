@@ -13,16 +13,16 @@
 
 #include <stdio.h>
 
-#include "makefilerule.h"
 #include "graph.h"
+#include "makefilerule.h"
 
 /**
  * Parses a makefile into its dependency graph representation
- * 
+ *
  * @param makefile file to parse
  * @return Graph* of makefile Rules that contains all entries from the makefile,
  * or exits gracefully upon error.
- * 
+ *
  * @example
  * ```C
  * FILE* makefile = fopen("test/simple_testcase/makefile", "r");
