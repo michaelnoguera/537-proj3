@@ -1,6 +1,6 @@
 CS 537 Programming Assignment 3 (Fall 2020)
 Michael Noguera (noguera@cs.wisc.edu) and Julien de Castelnau (de-castelnau@cs.wisc.edu)
-due Nov 4 at 5pm
+due Nov 5 at 12:30pm
 
 == BUILDING ==
 
@@ -12,9 +12,30 @@ analyzer, and scan-view to view the generated output in a web browser.
 Use "make clean" to get rid of object files and executables.
 
 == USAGE ==
+Valid usages are:
+ - `./537make`
+ - `./537make TARGET`
+ - `./537make -f MAKEFILE`
+ - `./537make -f MAKEFILE TARGET`
 
+I/O redirection is supported.
 
-== PROJECT STRUCTURE ==
+== PROJECT STRUCTURE: MODULES ==
+ - main: (of course), gets arguments and sorchestrates program operation
 
-The functionality of ___ is divided into four logical modules, which serve the
- following tasks:
+ - makefileparser: macro-scale makefile parser, given a file pointer outputs a
+   directed graph of rules
+   uses pthreads to read, process, and output in a synchronized fashion
+
+ - makefilerule: interprets individual rules' commands, and handles I/O detection
+
+ - graph: DAG (errors upon cycle detection), specifically constructed to hold
+   makefile Rules. Topological sorting is handled here.
+
+ - exec: forks and runs each process as detailed by topologically ordered list.
+
+ - VARIOUS ADTs: void*s make these fully generic:
+    - linkedlist: linkedlist of void*s
+    - queue: thread-safe circular buffer of void*s (used for synchronization in
+      makefileparser)
+    - bintree: binary tree implementation with string keys and void* values
